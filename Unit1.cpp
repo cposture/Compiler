@@ -1,20 +1,22 @@
 /*** PL0 COMPILER WITH CODE GENERATION ***/
 //---------------------------------------------------------------------------
-#include <vcl.h>
-#pragma hdrstop
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+#include <iostream>
+#include <cstring>
 #include "Unit1.h"
+
+using namespace std;
 //---------------------------------------------------------------------------
-#pragma package(smart_init)
-#pragma resource "*.dfm"
-TForm1 *Form1;
 //---------------------------------------------------------------------------
-const  AL    =  10;  /* LENGTH OF IDENTIFIERS */
-const  NORW  =  14;  /* # OF RESERVED WORDS */
-const  TXMAX = 100;  /* LENGTH OF IDENTIFIER TABLE */
-const  NMAX  =  14;  /* MAX NUMBER OF DEGITS IN NUMBERS */
-const  AMAX  =2047;  /* MAXIMUM ADDRESS */
-const  LEVMAX=   3;  /* MAX DEPTH OF BLOCK NESTING */
-const  CXMAX = 200;  /* SIZE OF CODE ARRAY */
+#define  AL  10  /* LENGTH OF IDENTIFIERS */
+#define  NORW  14  /* # OF RESERVED WORDS */
+#define  TXMAX  100  /* LENGTH OF IDENTIFIER TABLE */
+#define  NMAX     14  /* MAX NUMBER OF DEGITS IN NUMBERS */
+#define  AMAX   2047  /* MAXIMUM ADDRESS */
+#define  LEVMAX    3  /* MAX DEPTH OF BLOCK NESTING */
+#define  CXMAX  200  /* SIZE OF CODE ARRAY */
 
 typedef enum  { NUL, IDENT, NUMBER, PLUS, MINUS, TIMES,
 	            SLASH, ODDSYM, EQL, NEQ, LSS, LEQ, GTR, GEQ,
@@ -23,7 +25,8 @@ typedef enum  { NUL, IDENT, NUMBER, PLUS, MINUS, TIMES,
 	            WHILESYM, WRITESYM, READSYM, DOSYM, CALLSYM,
 	            CONSTSYM, VARSYM, PROCSYM, PROGSYM
         } SYMBOL;
-char *SYMOUT[] = {"NUL", "IDENT", "NUMBER", "PLUS", "MINUS", "TIMES",
+
+const char *SYMOUT[] = {"NUL", "IDENT", "NUMBER", "PLUS", "MINUS", "TIMES",
 	    "SLASH", "ODDSYM", "EQL", "NEQ", "LSS", "LEQ", "GTR", "GEQ",
 	    "LPAREN", "RPAREN", "COMMA", "SEMICOLON", "PERIOD",
 	    "BECOMES", "BEGINSYM", "ENDSYM", "IFSYM", "THENSYM",
@@ -80,9 +83,9 @@ int SymIn(SYMBOL SYM, SYMSET S1) {
   return S1[SYM];
 }
 //---------------------------------------------------------------------------
-//Ç°¸ú·ûºÅ¼¯ºÍºó¸ú·ûºÅ¼¯ºÏ³ÉÒ»¸ö¼¯ºÏ
+//Ã‡Â°Â¸ÃºÂ·Ã»ÂºÃ…Â¼Â¯ÂºÃÂºÃ³Â¸ÃºÂ·Ã»ÂºÃ…Â¼Â¯ÂºÃÂ³Ã‰Ã’Â»Â¸Ã¶Â¼Â¯ÂºÃ
 SYMSET SymSetUnion(SYMSET S1, SYMSET S2) {
-  SYMSET S=(SYMSET)malloc(sizeof(int)*33); //Îª»úÄÚÂë×Ö·û¼¯·ÖÅä¿Õ¼ä
+  SYMSET S=(SYMSET)malloc(sizeof(int)*33); //ÃŽÂªÂ»ÃºÃ„ÃšÃ‚Ã«Ã—Ã–Â·Ã»Â¼Â¯Â·Ã–Ã…Ã¤Â¿Ã•Â¼Ã¤
   for (int i=0; i<33; i++)
 	if (S1[i] || S2[i]) S[i]=1;
 	else S[i]=0;
@@ -153,15 +156,15 @@ SYMSET SymSetNULL() {
 }
 //---------------------------------------------------------------------------
 void Error(int n) {
-  String s = "***"+AnsiString::StringOfChar(' ', CC-1)+"^";
-  Form1->printls(s.c_str(),n);   fprintf(FOUT,"%s%d\n", s.c_str(), n);
+  string s = s + "***"+ ' ' + std::to_string(CC-1) + "^";
+  cout << s << n << endl;
   ERR++;
 } /*Error*/
 //---------------------------------------------------------------------------
 void GetCh() {
   if (CC==LL) {
     if (feof(FIN)) {
-	  Form1->printfs("PROGRAM INCOMPLETE");
+    	cout << "PROGRAM INCOMPLETE" << endl;
 	  fprintf(FOUT,"PROGRAM INCOMPLETE\n");
 	  fclose(FOUT);
 	  exit(0);
@@ -171,10 +174,10 @@ void GetCh() {
 	while (!feof(FIN) && CH!=10)
       { CH=fgetc(FIN);  LINE[LL++]=CH; }
 	LINE[LL-1]=' ';  LINE[LL]=0;
-    String s=IntToStr(CX);
-    while(s.Length()<3) s=" "+s;
+    string s=std::to_string(CX);
+    while(s.length()<3) s=" "+s;
     s=s+" "+LINE;
-	Form1->printfs(s.c_str());
+    cout << s << endl;
     fprintf(FOUT,"%s\n",s);
   }
   CH=LINE[CC++];
@@ -232,7 +235,7 @@ void GetSym() {
 //---------------------------------------------------------------------------
 void GEN(FCT X, int Y, int Z) {
   if (CX>CXMAX) {
-    Form1->printfs("PROGRAM TOO LONG");
+  	cout << "PROGRAM TOO LONG" << endl;
 	fprintf(FOUT,"PROGRAM TOO LONG\n");
 	fclose(FOUT);
     exit(0);
@@ -292,12 +295,12 @@ void VarDeclaration(int LEV,int &TX,int &DX) {
 } /*VarDeclaration()*/
 //---------------------------------------------------------------------------
 void ListCode(int CX0) {  /*LIST CODE GENERATED FOR THIS Block*/
-  if (Form1->ListSwitch->ItemIndex==0)
+  if (true) //changed
     for (int i=CX0; i<CX; i++) {
-      String s=IntToStr(i);
-      while(s.Length()<3)s=" "+s;
-      s=s+" "+MNEMONIC[CODE[i].F]+" "+IntToStr(CODE[i].L)+" "+IntToStr(CODE[i].A);
-	  Form1->printfs(s.c_str());
+      string s = std::to_string(i);
+      while(s.length()<3)s=" "+s;
+      s=s+" "+MNEMONIC[CODE[i].F]+" "+ std::to_string(CODE[i].L)+" "+std::to_string(CODE[i].A);
+	  cout << s << endl;
 	  fprintf(FOUT,"%3d%5s%4d%4d\n",i,MNEMONIC[CODE[i].F],CODE[i].L,CODE[i].A);
     }
 } /*ListCode()*/;
@@ -533,11 +536,11 @@ int BASE(int L,int B,int S[]) {
 } /*BASE*/
 //---------------------------------------------------------------------------
 void Interpret() {
-  const STACKSIZE = 500;
+  const int STACKSIZE = 500;
   int P,B,T; 		/*PROGRAM BASE TOPSTACK REGISTERS*/
   INSTRUCTION I;
   int S[STACKSIZE];  	/*DATASTORE*/
-  Form1->printfs("~~~ RUN PL0 ~~~");
+  cout << "~~~ RUN PL0 ~~~" << endl;
   fprintf(FOUT,"~~~ RUN PL0 ~~~\n");
   T=0; B=1; P=0;
   S[1]=0; S[2]=0; S[3]=0;
@@ -560,11 +563,11 @@ void Interpret() {
 	      case 11: T--; S[T]=S[T]>=S[T+1];  break;
 	      case 12: T--; S[T]=S[T]>S[T+1];   break;
 	      case 13: T--; S[T]=S[T]<=S[T+1];  break;
-	      case 14: Form1->printls("",S[T]); fprintf(FOUT,"%d\n",S[T]); T--;
+	      case 14: cout  << S[T] << endl; fprintf(FOUT,"%d\n",S[T]); T--;
                    break;
 	      case 15: /*Form1->printfs(""); fprintf(FOUT,"\n"); */ break;
-	      case 16: T++;  S[T]=InputBox("ÊäÈë","Çë¼üÅÌÊäÈë£º", 0).ToInt();
-                   Form1->printls("? ",S[T]); fprintf(FOUT,"? %d\n",S[T]);
+	      case 16: T++;  cout << "please input:" << endl; cin >> S[T];
+                   cout << "? " << S[T]; fprintf(FOUT,"? %d\n",S[T]);
 		           break;
 	    }
 	    break;
@@ -578,11 +581,17 @@ void Interpret() {
       case JPC: if (S[T]==0) P=I.A;  T--;  break;
     } /*switch*/
   }while(P!=0);
-  Form1->printfs("~~~ END PL0 ~~~");
+  cout << "~~~ END PL0 ~~~";
   fprintf(FOUT,"~~~ END PL0 ~~~\n");
 } /*Interpret*/
 //---------------------------------------------------------------------------
-void __fastcall TForm1::ButtonRunClick(TObject *Sender) {
+void run() {
+	string EditNamein;
+	string EditNameout;
+	cout << "please input PL0 file name(format is *.PL0)" << endl;
+	cin >> EditNamein;
+	cout << "please input output file name(format is *.txt)" << endl;
+	cin >> EditNameout;
   for (CH=' '; CH<='^'; CH++)
   	SSYM[CH]=NUL;
 
@@ -635,13 +644,13 @@ void __fastcall TForm1::ButtonRunClick(TObject *Sender) {
   FACBEGSYS[NUMBER]=1;
   FACBEGSYS[LPAREN]=1;
 
-  if ((FIN=fopen((Form1->EditName->Text+".PL0").c_str(),"r"))!=0) 
+  if ((FIN=fopen(EditNamein.c_str(),"r"))!=0) 
   {
-	FOUT=fopen((Form1->EditName->Text+".COD").c_str(),"w");
-    Form1->printfs("=== COMPILE PL0 ===");
+	FOUT=fopen(EditNameout.c_str(),"w");
+	cout << "=== COMPILE PL0 ===" << endl;
     fprintf(FOUT,"=== COMPILE PL0 ===\n");
 
-    //头部判断
+    //å¤´éƒ¨åˆ¤æ–­
 	ERR=0;
 	CC=0; CX=0; LL=0; CH=' '; 
 
@@ -666,23 +675,27 @@ void __fastcall TForm1::ButtonRunClick(TObject *Sender) {
 	  }
 	}
 
-	//编译部分
+	//ç¼–è¯‘éƒ¨åˆ†
 	Block(0,0,SymSetAdd(PERIOD,SymSetUnion(DECLBEGSYS,STATBEGSYS)));
 
 	if (SYM!=PERIOD) 
 		Error(9);
 
-	//ִ�г��򲿷�
+	//Ö´ÐÐ³ÌÐò²¿·Ö
 	if (ERR==0) 
 	{
 		Interpret();
 	}
 	else 
 	{
-	  Form1->printfs("ERROR IN PL/0 PROGRAM");
+		cout << "ERROR IN PL/0 PROGRAM" << endl;
 	  fprintf(FOUT,"ERROR IN PL/0 PROGRAM");
 	}
 	fprintf(FOUT,"\n"); fclose(FOUT);
+  }
+  else
+  {
+  	perror ("Error opening file");
   }
 }
 //---------------------------------------------------------------------------
