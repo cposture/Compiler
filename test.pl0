@@ -1,0 +1,10 @@
+PROGRAM EX;
+VAR a,b;
+BEGIN
+	a:=10;
+	b:=10;
+	IF a>b THEN
+		WRITE(100);
+	ELSE
+		WRITE(10);
+END.
