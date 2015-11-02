@@ -26,7 +26,7 @@ typedef enum  {
     LPAREN, RPAREN, COMMA, SEMICOLON, PERIOD,
     BECOMES, BEGINSYM, ENDSYM, IFSYM, THENSYM,
     WHILESYM, WRITESYM, READSYM, DOSYM, CALLSYM,
-    CONSTSYM, VARSYM, PROCSYM, PROGSYM, TIMESEQ
+    CONSTSYM, VARSYM, PROCSYM, PROGSYM, TIMESEQ, ELSESYM
 } SYMBOL;
 
 const char *SYMOUT[] = { "NUL", "IDENT", "NUMBER", "PLUS", "MINUS", "TIMES",
@@ -34,8 +34,8 @@ const char *SYMOUT[] = { "NUL", "IDENT", "NUMBER", "PLUS", "MINUS", "TIMES",
 "LPAREN", "RPAREN", "COMMA", "SEMICOLON", "PERIOD",
 "BECOMES", "BEGINSYM", "ENDSYM", "IFSYM", "THENSYM",
 "WHILESYM", "WRITESYM", "READSYM", "DOSYM", "CALLSYM",
-"CONSTSYM", "VARSYM", "PROCSYM", "PROGSYM", "TIMESEQ" };
-typedef  int *SYMSET; // SET OF SYMBOL;
+"CONSTSYM", "VARSYM", "PROCSYM", "PROGSYM", "TIMESEQ" ,"ELSESYM"};
+typedef  int *SYMSET; // SET OF SYMBOL;S
 typedef  char ALFA[11];
 typedef  enum { CONSTANT, VARIABLE, PROCEDUR } OBJECTS;//标识符类型
 typedef  enum { LIT, OPR, LOD, STO, CAL, INI, JMP, JPC } FCT;
@@ -90,8 +90,8 @@ int SymIn(SYMBOL SYM, SYMSET S1) {
 //---------------------------------------------------------------------------
 
 SYMSET SymSetUnion(SYMSET S1, SYMSET S2) {
-    SYMSET S = (SYMSET)malloc(sizeof(int)* 34); 
-    for (int i = 0; i < 34; i++)
+    SYMSET S = (SYMSET)malloc(sizeof(int)* 35); 
+    for (int i = 0; i < 35; i++)
     if (S1[i] || S2[i]) S[i] = 1;
     else S[i] = 0;
     return S;
@@ -99,64 +99,64 @@ SYMSET SymSetUnion(SYMSET S1, SYMSET S2) {
 //---------------------------------------------------------------------------
 SYMSET SymSetAdd(SYMBOL SY, SYMSET S) {
     SYMSET S1;
-    S1 = (SYMSET)malloc(sizeof(int)* 34);
-    for (int i = 0; i < 34; i++) S1[i] = S[i];
+    S1 = (SYMSET)malloc(sizeof(int)* 35);
+    for (int i = 0; i < 35; i++) S1[i] = S[i];
     S1[SY] = 1;
     return S1;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a) {
     SYMSET S; int i;
-    S = (SYMSET)malloc(sizeof(int)* 34);
-    for (i = 0; i < 34; i++) S[i] = 0;
+    S = (SYMSET)malloc(sizeof(int)* 35);
+    for (i = 0; i < 35; i++) S[i] = 0;
     S[a] = 1;
     return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a, SYMBOL b) {
     SYMSET S; int i;
-    S = (SYMSET)malloc(sizeof(int)* 34);
-    for (i = 0; i < 34; i++) S[i] = 0;
+    S = (SYMSET)malloc(sizeof(int)* 35);
+    for (i = 0; i < 35; i++) S[i] = 0;
     S[a] = 1;  S[b] = 1;
     return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c) {
     SYMSET S; int i;
-    S = (SYMSET)malloc(sizeof(int)* 34);
-    for (i = 0; i < 34; i++) S[i] = 0;
+    S = (SYMSET)malloc(sizeof(int)* 35);
+    for (i = 0; i < 35; i++) S[i] = 0;
     S[a] = 1;  S[b] = 1; S[c] = 1;
     return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c, SYMBOL d) {
     SYMSET S; int i;
-    S = (SYMSET)malloc(sizeof(int)* 34);
-    for (i = 0; i < 34; i++) S[i] = 0;
+    S = (SYMSET)malloc(sizeof(int)* 35);
+    for (i = 0; i < 35; i++) S[i] = 0;
     S[a] = 1;  S[b] = 1; S[c] = 1; S[d] = 1;
     return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c, SYMBOL d, SYMBOL e) {
     SYMSET S; int i;
-    S = (SYMSET)malloc(sizeof(int)* 34);
-    for (i = 0; i < 34; i++) S[i] = 0;
+    S = (SYMSET)malloc(sizeof(int)* 35);
+    for (i = 0; i < 35; i++) S[i] = 0;
     S[a] = 1;  S[b] = 1; S[c] = 1; S[d] = 1; S[e] = 1;
     return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c, SYMBOL d, SYMBOL e, SYMBOL f) {
     SYMSET S; int i;
-    S = (SYMSET)malloc(sizeof(int)* 34);
-    for (i = 0; i < 34; i++) S[i] = 0;
+    S = (SYMSET)malloc(sizeof(int)* 35);
+    for (i = 0; i < 35; i++) S[i] = 0;
     S[a] = 1;  S[b] = 1; S[c] = 1; S[d] = 1; S[e] = 1; S[f] = 1;
     return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNULL() {
     SYMSET S; int i;
-    S = (SYMSET)malloc(sizeof(int)* 34);
-    for (i = 0; i < 34; i++) S[i] = 0;
+    S = (SYMSET)malloc(sizeof(int)* 35);
+    for (i = 0; i < 35; i++) S[i] = 0;
     return S;
 }
 //---------------------------------------------------------------------------
@@ -431,7 +431,7 @@ void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
         break;
     case READSYM:
         GetSym();
-        if (SYM != LPAREN) Error(34);
+        if (SYM != LPAREN) Error(35);
         else
         do {
             GetSym();
@@ -445,7 +445,7 @@ void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
             GetSym();
         } while (SYM == COMMA);
         if (SYM != RPAREN) {
-            Error(34);
+            Error(35);
             while (!SymIn(SYM, FSYS)) GetSym();
         }
         else GetSym();
@@ -458,7 +458,7 @@ void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
                 EXPRESSION(SymSetUnion(SymSetNew(RPAREN, COMMA), FSYS), LEV, TX);
                 GEN(OPR, 0, 14);
             } while (SYM == COMMA);
-            if (SYM != RPAREN) Error(34);
+            if (SYM != RPAREN) Error(35);
             else GetSym();
         }
         GEN(OPR, 0, 15);
@@ -481,8 +481,16 @@ void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
         CONDITION(SymSetUnion(SymSetNew(THENSYM, DOSYM), FSYS), LEV, TX);
         if (SYM == THENSYM) GetSym();
         else Error(16);
-        CX1 = CX;  GEN(JPC, 0, 0);
-        STATEMENT(FSYS, LEV, TX);  CODE[CX1].A = CX;
+        //保存待回填的地址(E假出口)
+        CX1 = CX;  GEN(JPC, 0, 0); //JPC条件为假时跳转,否则顺序执行
+        STATEMENT(FSYS, LEV, TX);
+        CX2 = CX;
+        GEN(JMP, 0, 0);
+        if (SYM == ELSESYM) 
+            GetSym();
+        CODE[CX1].A = CX;
+        STATEMENT(FSYS, LEV, TX);
+        CODE[CX2].A = CX;
         break;
     case BEGINSYM:
         GetSym();
@@ -658,12 +666,12 @@ void run() {
     strcpy(MNEMONIC[CAL], "CAL");   strcpy(MNEMONIC[INI], "INI");
     strcpy(MNEMONIC[JMP], "JMP");   strcpy(MNEMONIC[JPC], "JPC");
 
-    //34代表符号个数
-    DECLBEGSYS = (int*)malloc(sizeof(int)* 34);
-    STATBEGSYS = (int*)malloc(sizeof(int)* 34);
-    FACBEGSYS = (int*)malloc(sizeof(int)* 34);
+    //35代表符号个数
+    DECLBEGSYS = (int*)malloc(sizeof(int)* 35);
+    STATBEGSYS = (int*)malloc(sizeof(int)* 35);
+    FACBEGSYS = (int*)malloc(sizeof(int)* 35);
 
-    for (int j = 0; j < 34; j++)
+    for (int j = 0; j < 35; j++)
     {
         DECLBEGSYS[j] = 0;  STATBEGSYS[j] = 0;  FACBEGSYS[j] = 0;
     }
