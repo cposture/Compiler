@@ -3,6 +3,7 @@ VAR A,B,C;
 BEGIN
   A:=88;
   READ(B);
-  C=A+B*(3+B);
+  A*=8
+  C:=A+B*(3+B);
   WRITE(C)
 END.
