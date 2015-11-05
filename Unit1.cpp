@@ -2,6 +2,8 @@
 //---------------------------------------------------------------------------
 //_CRT_SECURE_NO_WARNINGS : Visual studio macro 
 #define _CRT_SECURE_NO_WARNINGS
+#define DEGUG
+
 #include <cstdio>
 #include <cstdlib>
 #include <string>
@@ -13,7 +15,7 @@ using namespace std;
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 #define  AL  10  /* LENGTH OF IDENTIFIERS */
-#define  NORW  14  /* # OF RESERVED WORDS */
+#define  NORW  15  /* # OF RESERVED WORDS */
 #define  TXMAX  100  /* LENGTH OF IDENTIFIER TABLE */
 #define  NMAX     14  /* MAX NUMBER OF DEGITS IN NUMBERS */
 #define  AMAX   2047  /* MAXIMUM ADDRESS */
@@ -486,11 +488,14 @@ void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
         STATEMENT(FSYS, LEV, TX);
         CX2 = CX;
         GEN(JMP, 0, 0);
-        if (SYM == ELSESYM) 
-            GetSym();
+        GetSym();
         CODE[CX1].A = CX;
-        STATEMENT(FSYS, LEV, TX);
-        CODE[CX2].A = CX;
+        if (SYM == ELSESYM)
+        {
+            GetSym();
+            STATEMENT(FSYS, LEV, TX);
+            CODE[CX2].A = CX;
+        }     
         break;
     case BEGINSYM:
         GetSym();
@@ -627,30 +632,39 @@ void Interpret() {
 void run() {
     string EditNamein;
     string EditNameout;
+
+#ifdef DEBUG
     cout << "please input PL0 file name(format is *.PL0)" << endl;
     cin >> EditNamein;
     cout << "please input output file name(format is *.txt)" << endl;
     cin >> EditNameout;
+#else
+    EditNamein = "E01.PL0";
+    EditNameout = "E01.txt";
+#endif
+
     for (CH = ' '; CH <= '^'; CH++)
         SSYM[CH] = NUL;
 
     //关键字单词，共NORW个
     strcpy(KWORD[1], "BEGIN");    strcpy(KWORD[2], "CALL");
     strcpy(KWORD[3], "CONST");    strcpy(KWORD[4], "DO");
-    strcpy(KWORD[5], "END");      strcpy(KWORD[6], "IF");
-    strcpy(KWORD[7], "ODD");      strcpy(KWORD[8], "PROCEDURE");
-    strcpy(KWORD[9], "PROGRAM");  strcpy(KWORD[10], "READ");
-    strcpy(KWORD[11], "THEN");     strcpy(KWORD[12], "VAR");
-    strcpy(KWORD[13], "WHILE");    strcpy(KWORD[14], "WRITE");
+    strcpy(KWORD[5], "ELSE");
+    strcpy(KWORD[6], "END");      strcpy(KWORD[7], "IF");
+    strcpy(KWORD[8], "ODD");      strcpy(KWORD[9], "PROCEDURE");
+    strcpy(KWORD[10], "PROGRAM");  strcpy(KWORD[11], "READ");
+    strcpy(KWORD[12], "THEN");     strcpy(KWORD[13], "VAR");
+    strcpy(KWORD[14], "WHILE");    strcpy(KWORD[15], "WRITE");
 
     //关键字
     WSYM[1] = BEGINSYM;   WSYM[2] = CALLSYM;
     WSYM[3] = CONSTSYM;   WSYM[4] = DOSYM;
-    WSYM[5] = ENDSYM;     WSYM[6] = IFSYM;
-    WSYM[7] = ODDSYM;     WSYM[8] = PROCSYM;
-    WSYM[9] = PROGSYM;    WSYM[10] = READSYM;
-    WSYM[11] = THENSYM;    WSYM[12] = VARSYM;
-    WSYM[13] = WHILESYM;   WSYM[14] = WRITESYM;
+    WSYM[5] = ELSESYM;
+    WSYM[6] = ENDSYM;     WSYM[7] = IFSYM;
+    WSYM[8] = ODDSYM;     WSYM[9] = PROCSYM;
+    WSYM[10] = PROGSYM;    WSYM[11] = READSYM;
+    WSYM[12] = THENSYM;    WSYM[13] = VARSYM;
+    WSYM[14] = WHILESYM;   WSYM[15] = WRITESYM;
 
     //运算符(加减)和分界符（逗号,分号,括号）
     SSYM['+'] = PLUS;      SSYM['-'] = MINUS;
