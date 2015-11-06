@@ -28,7 +28,7 @@ typedef enum  {
     LPAREN, RPAREN, COMMA, SEMICOLON, PERIOD,
     BECOMES, BEGINSYM, ENDSYM, IFSYM, THENSYM,
     WHILESYM, WRITESYM, READSYM, DOSYM, CALLSYM,
-    CONSTSYM, VARSYM, PROCSYM, PROGSYM, TIMESEQ, ELSESYM
+    CONSTSYM, VARSYM, PROCSYM, PROGSYM, TIMESEQ, ELSESYM, DIVEQ
 } SYMBOL;
 
 const char *SYMOUT[] = { "NUL", "IDENT", "NUMBER", "PLUS", "MINUS", "TIMES",
@@ -36,7 +36,7 @@ const char *SYMOUT[] = { "NUL", "IDENT", "NUMBER", "PLUS", "MINUS", "TIMES",
 "LPAREN", "RPAREN", "COMMA", "SEMICOLON", "PERIOD",
 "BECOMES", "BEGINSYM", "ENDSYM", "IFSYM", "THENSYM",
 "WHILESYM", "WRITESYM", "READSYM", "DOSYM", "CALLSYM",
-"CONSTSYM", "VARSYM", "PROCSYM", "PROGSYM", "TIMESEQ" ,"ELSESYM"};
+"CONSTSYM", "VARSYM", "PROCSYM", "PROGSYM", "TIMESEQ" ,"ELSESYM", "DIVEQ"};
 typedef  int *SYMSET; // SET OF SYMBOL;S
 typedef  char ALFA[11];
 typedef  enum { CONSTANT, VARIABLE, PROCEDUR } OBJECTS;//标识符类型
@@ -92,8 +92,8 @@ int SymIn(SYMBOL SYM, SYMSET S1) {
 //---------------------------------------------------------------------------
 
 SYMSET SymSetUnion(SYMSET S1, SYMSET S2) {
-    SYMSET S = (SYMSET)malloc(sizeof(int)* 35); 
-    for (int i = 0; i < 35; i++)
+    SYMSET S = (SYMSET)malloc(sizeof(int)* 36); 
+    for (int i = 0; i < 36; i++)
     if (S1[i] || S2[i]) S[i] = 1;
     else S[i] = 0;
     return S;
@@ -101,64 +101,64 @@ SYMSET SymSetUnion(SYMSET S1, SYMSET S2) {
 //---------------------------------------------------------------------------
 SYMSET SymSetAdd(SYMBOL SY, SYMSET S) {
     SYMSET S1;
-    S1 = (SYMSET)malloc(sizeof(int)* 35);
-    for (int i = 0; i < 35; i++) S1[i] = S[i];
+    S1 = (SYMSET)malloc(sizeof(int)* 36);
+    for (int i = 0; i < 36; i++) S1[i] = S[i];
     S1[SY] = 1;
     return S1;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a) {
     SYMSET S; int i;
-    S = (SYMSET)malloc(sizeof(int)* 35);
-    for (i = 0; i < 35; i++) S[i] = 0;
+    S = (SYMSET)malloc(sizeof(int)* 36);
+    for (i = 0; i < 36; i++) S[i] = 0;
     S[a] = 1;
     return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a, SYMBOL b) {
     SYMSET S; int i;
-    S = (SYMSET)malloc(sizeof(int)* 35);
-    for (i = 0; i < 35; i++) S[i] = 0;
+    S = (SYMSET)malloc(sizeof(int)* 36);
+    for (i = 0; i < 36; i++) S[i] = 0;
     S[a] = 1;  S[b] = 1;
     return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c) {
     SYMSET S; int i;
-    S = (SYMSET)malloc(sizeof(int)* 35);
-    for (i = 0; i < 35; i++) S[i] = 0;
+    S = (SYMSET)malloc(sizeof(int)* 36);
+    for (i = 0; i < 36; i++) S[i] = 0;
     S[a] = 1;  S[b] = 1; S[c] = 1;
     return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c, SYMBOL d) {
     SYMSET S; int i;
-    S = (SYMSET)malloc(sizeof(int)* 35);
-    for (i = 0; i < 35; i++) S[i] = 0;
+    S = (SYMSET)malloc(sizeof(int)* 36);
+    for (i = 0; i < 36; i++) S[i] = 0;
     S[a] = 1;  S[b] = 1; S[c] = 1; S[d] = 1;
     return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c, SYMBOL d, SYMBOL e) {
     SYMSET S; int i;
-    S = (SYMSET)malloc(sizeof(int)* 35);
-    for (i = 0; i < 35; i++) S[i] = 0;
+    S = (SYMSET)malloc(sizeof(int)* 36);
+    for (i = 0; i < 36; i++) S[i] = 0;
     S[a] = 1;  S[b] = 1; S[c] = 1; S[d] = 1; S[e] = 1;
     return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c, SYMBOL d, SYMBOL e, SYMBOL f) {
     SYMSET S; int i;
-    S = (SYMSET)malloc(sizeof(int)* 35);
-    for (i = 0; i < 35; i++) S[i] = 0;
+    S = (SYMSET)malloc(sizeof(int)* 36);
+    for (i = 0; i < 36; i++) S[i] = 0;
     S[a] = 1;  S[b] = 1; S[c] = 1; S[d] = 1; S[e] = 1; S[f] = 1;
     return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNULL() {
     SYMSET S; int i;
-    S = (SYMSET)malloc(sizeof(int)* 35);
-    for (i = 0; i < 35; i++) S[i] = 0;
+    S = (SYMSET)malloc(sizeof(int)* 36);
+    for (i = 0; i < 36; i++) S[i] = 0;
     return S;
 }
 //---------------------------------------------------------------------------
@@ -222,7 +222,7 @@ void GetSym() {
         } while (CH >= '0' && CH <= '9');
         if (K > NMAX) Error(30);
     }
-    else
+    else //运算符处理（分多个字节和一个字节）
     if (CH == ':') {
         GetCh();
         if (CH == '=') { SYM = BECOMES; GetCh(); }
@@ -250,7 +250,23 @@ void GetSym() {
         }
         else
         {
-            SYM = SSYM[CH]; GetCh();
+            if (CH == '/')
+            {
+                GetCh();
+                if (CH == '=')
+                {
+                    SYM = DIVEQ;
+                    GetCh();
+                }
+                else
+                {
+                    SYM = SLASH;
+                }
+            }
+            else //当运算符只占一个字节时，在这里处理
+            {
+                SYM = SSYM[CH]; GetCh();
+            }
         }
     }
 } /*GetSym()*/
@@ -419,27 +435,44 @@ void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
         GetSym();
         if (SYM == BECOMES) { sym_temp = SYM; GetSym(); }
         else if (SYM == TIMESEQ) { sym_temp = SYM; GetSym(); }
+        else if (SYM == DIVEQ){ sym_temp = SYM; GetSym(); }
         else Error(13);
-        EXPRESSION(FSYS, LEV, TX);
         if (i != 0)
         if (sym_temp == BECOMES)
-                GEN(STO, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR);
+        {
+            //计算表达式的值,并将值放在栈顶
+            EXPRESSION(FSYS, LEV, TX);
+            GEN(STO, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR);
+        }    
         else if (sym_temp == TIMESEQ)
-            {
-                GEN(LOD, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR);
-                GEN(OPR, 0, 4);
-                GEN(STO, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR);
-            }
+        {
+            //计算表达式的值,并将值放在栈顶
+            EXPRESSION(FSYS, LEV, TX);
+            GEN(LOD, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR);
+            GEN(OPR, 0, 4);
+            GEN(STO, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR);
+        }
+        else if (sym_temp == DIVEQ)
+        {
+            //将A的值放到栈顶
+            GEN(LOD, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR);
+            //计算表达式的值,并将值放在栈顶
+            EXPRESSION(FSYS, LEV, TX);
+            //将栈顶和次栈顶值相除，结果放在栈顶
+            GEN(OPR, 0, 5);
+            //将栈顶的值放在A中
+            GEN(STO, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR);
+        }
         break;
     case READSYM:
         GetSym();
-        if (SYM != LPAREN) Error(35);
+        if (SYM != LPAREN) Error(36);
         else
         do {
             GetSym();
             if (SYM == IDENT) i = POSITION(ID, TX);
             else i = 0;
-            if (i == 0) Error(35);
+            if (i == 0) Error(36);
             else {
                 GEN(OPR, 0, 16);
                 GEN(STO, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR);
@@ -447,7 +480,7 @@ void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
             GetSym();
         } while (SYM == COMMA);
         if (SYM != RPAREN) {
-            Error(35);
+            Error(36);
             while (!SymIn(SYM, FSYS)) GetSym();
         }
         else GetSym();
@@ -460,7 +493,7 @@ void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
                 EXPRESSION(SymSetUnion(SymSetNew(RPAREN, COMMA), FSYS), LEV, TX);
                 GEN(OPR, 0, 14);
             } while (SYM == COMMA);
-            if (SYM != RPAREN) Error(35);
+            if (SYM != RPAREN) Error(36);
             else GetSym();
         }
         GEN(OPR, 0, 15);
@@ -599,7 +632,7 @@ void Interpret() {
             case 2: T--; S[T] = S[T] + S[T + 1];   break;
             case 3: T--; S[T] = S[T] - S[T + 1];   break;
             case 4: T--; S[T] = S[T] * S[T + 1];   break;
-            case 5: T--; S[T] = S[T] % S[T + 1]; break;
+            case 5: T--; S[T] = S[T] / S[T + 1]; break;
             case 6: S[T] = (S[T] % 2 != 0);        break;
             case 8: T--; S[T] = S[T] == S[T + 1];  break;
             case 9: T--; S[T] = S[T] != S[T + 1];  break;
@@ -673,6 +706,7 @@ void run() {
     SSYM['='] = EQL;       SSYM[','] = COMMA;
     SSYM['.'] = PERIOD;    SSYM['#'] = NEQ;
     SSYM[';'] = SEMICOLON; SSYM['$'] = TIMESEQ;
+    SSYM['\\'] = DIVEQ;
 
     //目标代码指令
     strcpy(MNEMONIC[LIT], "LIT");   strcpy(MNEMONIC[OPR], "OPR");
@@ -680,12 +714,12 @@ void run() {
     strcpy(MNEMONIC[CAL], "CAL");   strcpy(MNEMONIC[INI], "INI");
     strcpy(MNEMONIC[JMP], "JMP");   strcpy(MNEMONIC[JPC], "JPC");
 
-    //35代表符号个数
-    DECLBEGSYS = (int*)malloc(sizeof(int)* 35);
-    STATBEGSYS = (int*)malloc(sizeof(int)* 35);
-    FACBEGSYS = (int*)malloc(sizeof(int)* 35);
+    //36代表符号个数
+    DECLBEGSYS = (int*)malloc(sizeof(int)* 36);
+    STATBEGSYS = (int*)malloc(sizeof(int)* 36);
+    FACBEGSYS = (int*)malloc(sizeof(int)* 36);
 
-    for (int j = 0; j < 35; j++)
+    for (int j = 0; j < 36; j++)
     {
         DECLBEGSYS[j] = 0;  STATBEGSYS[j] = 0;  FACBEGSYS[j] = 0;
     }
