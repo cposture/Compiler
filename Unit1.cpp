@@ -15,7 +15,7 @@ using namespace std;
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 #define  AL  10  /* LENGTH OF IDENTIFIERS */
-#define  NORW  15  /* # OF RESERVED WORDS */
+#define  NORW  19  /* # OF RESERVED WORDS */
 #define  TXMAX  100  /* LENGTH OF IDENTIFIER TABLE */
 #define  NMAX     14  /* MAX NUMBER OF DEGITS IN NUMBERS */
 #define  AMAX   2047  /* MAXIMUM ADDRESS */
@@ -28,7 +28,7 @@ typedef enum  {
     LPAREN, RPAREN, COMMA, SEMICOLON, PERIOD,
     BECOMES, BEGINSYM, ENDSYM, IFSYM, THENSYM,
     WHILESYM, WRITESYM, READSYM, DOSYM, CALLSYM,
-    CONSTSYM, VARSYM, PROCSYM, PROGSYM, TIMESEQ, ELSESYM, DIVEQ
+    CONSTSYM, VARSYM, PROCSYM, PROGSYM, TIMESEQ, ELSESYM, DIVEQ, FORSYM, STEPSYM, UNTILSYM, SYMBOLNUM
 } SYMBOL;
 
 const char *SYMOUT[] = { "NUL", "IDENT", "NUMBER", "PLUS", "MINUS", "TIMES",
@@ -36,7 +36,7 @@ const char *SYMOUT[] = { "NUL", "IDENT", "NUMBER", "PLUS", "MINUS", "TIMES",
 "LPAREN", "RPAREN", "COMMA", "SEMICOLON", "PERIOD",
 "BECOMES", "BEGINSYM", "ENDSYM", "IFSYM", "THENSYM",
 "WHILESYM", "WRITESYM", "READSYM", "DOSYM", "CALLSYM",
-"CONSTSYM", "VARSYM", "PROCSYM", "PROGSYM", "TIMESEQ" ,"ELSESYM", "DIVEQ"};
+"CONSTSYM", "VARSYM", "PROCSYM", "PROGSYM", "TIMESEQ" ,"ELSESYM", "DIVEQ","FORSYM","STEPSYM","UNTILSYM"};
 typedef  int *SYMSET; // SET OF SYMBOL;S
 typedef  char ALFA[11];
 typedef  enum { CONSTANT, VARIABLE, PROCEDUR } OBJECTS;//标识符类型
@@ -92,8 +92,8 @@ int SymIn(SYMBOL SYM, SYMSET S1) {
 //---------------------------------------------------------------------------
 
 SYMSET SymSetUnion(SYMSET S1, SYMSET S2) {
-    SYMSET S = (SYMSET)malloc(sizeof(int)* 36); 
-    for (int i = 0; i < 36; i++)
+    SYMSET S = (SYMSET)malloc(sizeof(int)* SYMBOLNUM); 
+    for (int i = 0; i < SYMBOLNUM; i++)
     if (S1[i] || S2[i]) S[i] = 1;
     else S[i] = 0;
     return S;
@@ -101,64 +101,64 @@ SYMSET SymSetUnion(SYMSET S1, SYMSET S2) {
 //---------------------------------------------------------------------------
 SYMSET SymSetAdd(SYMBOL SY, SYMSET S) {
     SYMSET S1;
-    S1 = (SYMSET)malloc(sizeof(int)* 36);
-    for (int i = 0; i < 36; i++) S1[i] = S[i];
+    S1 = (SYMSET)malloc(sizeof(int)* SYMBOLNUM);
+    for (int i = 0; i < SYMBOLNUM; i++) S1[i] = S[i];
     S1[SY] = 1;
     return S1;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a) {
     SYMSET S; int i;
-    S = (SYMSET)malloc(sizeof(int)* 36);
-    for (i = 0; i < 36; i++) S[i] = 0;
+    S = (SYMSET)malloc(sizeof(int)* SYMBOLNUM);
+    for (i = 0; i < SYMBOLNUM; i++) S[i] = 0;
     S[a] = 1;
     return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a, SYMBOL b) {
     SYMSET S; int i;
-    S = (SYMSET)malloc(sizeof(int)* 36);
-    for (i = 0; i < 36; i++) S[i] = 0;
+    S = (SYMSET)malloc(sizeof(int)* SYMBOLNUM);
+    for (i = 0; i < SYMBOLNUM; i++) S[i] = 0;
     S[a] = 1;  S[b] = 1;
     return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c) {
     SYMSET S; int i;
-    S = (SYMSET)malloc(sizeof(int)* 36);
-    for (i = 0; i < 36; i++) S[i] = 0;
+    S = (SYMSET)malloc(sizeof(int)* SYMBOLNUM);
+    for (i = 0; i < SYMBOLNUM; i++) S[i] = 0;
     S[a] = 1;  S[b] = 1; S[c] = 1;
     return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c, SYMBOL d) {
     SYMSET S; int i;
-    S = (SYMSET)malloc(sizeof(int)* 36);
-    for (i = 0; i < 36; i++) S[i] = 0;
+    S = (SYMSET)malloc(sizeof(int)* SYMBOLNUM);
+    for (i = 0; i < SYMBOLNUM; i++) S[i] = 0;
     S[a] = 1;  S[b] = 1; S[c] = 1; S[d] = 1;
     return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c, SYMBOL d, SYMBOL e) {
     SYMSET S; int i;
-    S = (SYMSET)malloc(sizeof(int)* 36);
-    for (i = 0; i < 36; i++) S[i] = 0;
+    S = (SYMSET)malloc(sizeof(int)* SYMBOLNUM);
+    for (i = 0; i < SYMBOLNUM; i++) S[i] = 0;
     S[a] = 1;  S[b] = 1; S[c] = 1; S[d] = 1; S[e] = 1;
     return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c, SYMBOL d, SYMBOL e, SYMBOL f) {
     SYMSET S; int i;
-    S = (SYMSET)malloc(sizeof(int)* 36);
-    for (i = 0; i < 36; i++) S[i] = 0;
+    S = (SYMSET)malloc(sizeof(int)* SYMBOLNUM);
+    for (i = 0; i < SYMBOLNUM; i++) S[i] = 0;
     S[a] = 1;  S[b] = 1; S[c] = 1; S[d] = 1; S[e] = 1; S[f] = 1;
     return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNULL() {
     SYMSET S; int i;
-    S = (SYMSET)malloc(sizeof(int)* 36);
-    for (i = 0; i < 36; i++) S[i] = 0;
+    S = (SYMSET)malloc(sizeof(int)* SYMBOLNUM);
+    for (i = 0; i < SYMBOLNUM; i++) S[i] = 0;
     return S;
 }
 //---------------------------------------------------------------------------
@@ -422,7 +422,7 @@ void CONDITION(SYMSET FSYS, int LEV, int &TX) {
 } /*CONDITION*/
 //---------------------------------------------------------------------------
 void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
-    int i, CX1, CX2;
+    int i, CX1, CX2,CX3;
     SYMBOL sym_temp;
     switch (SYM) {
     case IDENT:
@@ -466,13 +466,13 @@ void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
         break;
     case READSYM:
         GetSym();
-        if (SYM != LPAREN) Error(36);
+        if (SYM != LPAREN) Error(SYMBOLNUM);
         else
         do {
             GetSym();
             if (SYM == IDENT) i = POSITION(ID, TX);
             else i = 0;
-            if (i == 0) Error(36);
+            if (i == 0) Error(SYMBOLNUM);
             else {
                 GEN(OPR, 0, 16);
                 GEN(STO, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR);
@@ -480,7 +480,7 @@ void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
             GetSym();
         } while (SYM == COMMA);
         if (SYM != RPAREN) {
-            Error(36);
+            Error(SYMBOLNUM);
             while (!SymIn(SYM, FSYS)) GetSym();
         }
         else GetSym();
@@ -493,7 +493,7 @@ void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
                 EXPRESSION(SymSetUnion(SymSetNew(RPAREN, COMMA), FSYS), LEV, TX);
                 GEN(OPR, 0, 14);
             } while (SYM == COMMA);
-            if (SYM != RPAREN) Error(36);
+            if (SYM != RPAREN) Error(SYMBOLNUM);
             else GetSym();
         }
         GEN(OPR, 0, 15);
@@ -513,7 +513,7 @@ void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
         break;
     case IFSYM:
         GetSym();
-        CONDITION(SymSetUnion(SymSetNew(THENSYM, DOSYM), FSYS), LEV, TX);
+        CONDITION(SymSetUnion(SymSetNew(THENSYM), FSYS), LEV, TX); //这里的new应该不能包含DOSYM吧，已去除
         if (SYM == THENSYM) GetSym();
         else Error(16);
         //保存待回填的地址(E假出口)
@@ -549,6 +549,64 @@ void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
         STATEMENT(FSYS, LEV, TX);
         GEN(JMP, 0, CX1);
         CODE[CX2].A = CX;
+        break;
+    case FORSYM:
+        //i:=E
+        GetSym();
+        if (SYM == IDENT)
+        {
+            i = POSITION(ID, TX); //保存变量在符号表中的位置，便于下面引用
+            STATEMENT(SymSetAdd(STEPSYM, FSYS), LEV, TX); //处理并赋值到i
+        }  
+        else
+        {
+            Error(33);
+        }
+        CX1 = CX;
+        GEN(JMP, 0, 0);
+        //i:=E + i,计算E
+        CX2 = CX;
+        if (SYM == STEPSYM)
+        {
+            GetSym();
+            EXPRESSION(SymSetAdd(UNTILSYM, FSYS), LEV, TX);
+            //将变量i存储到栈顶
+            GEN(LOD, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR);
+            //相加
+            GEN(OPR, 0, 2);
+            //将栈顶放入变量i
+            GEN(STO, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR);
+        }
+        else
+        {
+            Error(34);
+        }
+        //until E
+        CODE[CX1].A = CX;
+        if (SYM == UNTILSYM)
+        {
+            GetSym();
+            GEN(LOD, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR);
+            EXPRESSION(SymSetAdd(DOSYM, FSYS), LEV, TX);
+            GEN(OPR, 0, 13);
+            CX3 = CX;
+            GEN(JPC, 0, 0);
+        }
+        else
+        {
+            Error(35);
+        }
+        if (SYM == DOSYM)
+        {
+            GetSym();
+            STATEMENT(FSYS, LEV, TX);
+        }
+        else
+        {
+            Error(36);
+        }
+        GEN(JMP, 0, CX2);
+        CODE[CX3].A = CX;
         break;
     }
     TEST(FSYS, SymSetNULL(), 19);
@@ -665,7 +723,7 @@ void Interpret() {
 void run() {
     string EditNamein;
     string EditNameout;
-
+    int i = 1;
 #ifdef DEBUG
     cout << "please input PL0 file name(format is *.PL0)" << endl;
     cin >> EditNamein;
@@ -680,24 +738,28 @@ void run() {
         SSYM[CH] = NUL;
 
     //关键字单词，共NORW个
-    strcpy(KWORD[1], "BEGIN");    strcpy(KWORD[2], "CALL");
-    strcpy(KWORD[3], "CONST");    strcpy(KWORD[4], "DO");
-    strcpy(KWORD[5], "ELSE");
-    strcpy(KWORD[6], "END");      strcpy(KWORD[7], "IF");
-    strcpy(KWORD[8], "ODD");      strcpy(KWORD[9], "PROCEDURE");
-    strcpy(KWORD[10], "PROGRAM");  strcpy(KWORD[11], "READ");
-    strcpy(KWORD[12], "THEN");     strcpy(KWORD[13], "VAR");
-    strcpy(KWORD[14], "WHILE");    strcpy(KWORD[15], "WRITE");
+    i = 1;
+    strcpy(KWORD[i++], "BEGIN");    strcpy(KWORD[i++], "CALL");
+    strcpy(KWORD[i++], "CONST");    strcpy(KWORD[i++], "DO");
+    strcpy(KWORD[i++], "ELSE");     strcpy(KWORD[i++], "END");
+    strcpy(KWORD[i++], "FOR");      strcpy(KWORD[i++], "IF");
+    strcpy(KWORD[i++], "ODD");      strcpy(KWORD[i++], "PROCEDURE");
+    strcpy(KWORD[i++], "PROGRAM");  strcpy(KWORD[i++], "READ");
+    strcpy(KWORD[i++], "STEP");     strcpy(KWORD[i++], "THEN");
+    strcpy(KWORD[i++], "UNTIL");    strcpy(KWORD[i++], "VAR");
+    strcpy(KWORD[i++], "WHILE");    strcpy(KWORD[i++], "WRITE");
 
     //关键字
-    WSYM[1] = BEGINSYM;   WSYM[2] = CALLSYM;
-    WSYM[3] = CONSTSYM;   WSYM[4] = DOSYM;
-    WSYM[5] = ELSESYM;
-    WSYM[6] = ENDSYM;     WSYM[7] = IFSYM;
-    WSYM[8] = ODDSYM;     WSYM[9] = PROCSYM;
-    WSYM[10] = PROGSYM;    WSYM[11] = READSYM;
-    WSYM[12] = THENSYM;    WSYM[13] = VARSYM;
-    WSYM[14] = WHILESYM;   WSYM[15] = WRITESYM;
+    i = 1;
+    WSYM[i++] = BEGINSYM;   WSYM[i++] = CALLSYM;
+    WSYM[i++] = CONSTSYM;   WSYM[i++] = DOSYM;
+    WSYM[i++] = ELSESYM;    WSYM[i++] = ENDSYM;
+    WSYM[i++] = FORSYM;     WSYM[i++] = IFSYM;
+    WSYM[i++] = ODDSYM;     WSYM[i++] = PROCSYM;
+    WSYM[i++] = PROGSYM;    WSYM[i++] = READSYM;
+    WSYM[i++] = STEPSYM;    WSYM[i++] = THENSYM;
+    WSYM[i++] = UNTILSYM;   WSYM[i++] = VARSYM;
+    WSYM[i++] = WHILESYM;   WSYM[i++] = WRITESYM;
 
     //运算符(加减)和分界符（逗号,分号,括号）
     SSYM['+'] = PLUS;      SSYM['-'] = MINUS;
@@ -714,12 +776,12 @@ void run() {
     strcpy(MNEMONIC[CAL], "CAL");   strcpy(MNEMONIC[INI], "INI");
     strcpy(MNEMONIC[JMP], "JMP");   strcpy(MNEMONIC[JPC], "JPC");
 
-    //36代表符号个数
-    DECLBEGSYS = (int*)malloc(sizeof(int)* 36);
-    STATBEGSYS = (int*)malloc(sizeof(int)* 36);
-    FACBEGSYS = (int*)malloc(sizeof(int)* 36);
+    //SYMBOLNUM代表符号个数
+    DECLBEGSYS = (int*)malloc(sizeof(int)* SYMBOLNUM);
+    STATBEGSYS = (int*)malloc(sizeof(int)* SYMBOLNUM);
+    FACBEGSYS = (int*)malloc(sizeof(int)* SYMBOLNUM);
 
-    for (int j = 0; j < 36; j++)
+    for (int j = 0; j < SYMBOLNUM; j++)
     {
         DECLBEGSYS[j] = 0;  STATBEGSYS[j] = 0;  FACBEGSYS[j] = 0;
     }
