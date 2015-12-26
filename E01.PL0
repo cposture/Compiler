@@ -1,5 +1,6 @@
-PROGRAM EX01;
-VAR A,B,C;
+PROGRAM EX01; 
+VAR A,B,C; 
+CHAR D;
 BEGIN
 	FOR C:=1 STEP 1 UNTIL 2 DO
 	BEGIN
@@ -7,7 +8,7 @@ BEGIN
 		
 		READ(A);
 		READ(B);
-		
+	
 		/*
 		aB
 		*/

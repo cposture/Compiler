@@ -28,7 +28,7 @@ typedef enum  {
 	LPAREN, RPAREN, COMMA, SEMICOLON, PERIOD,
 	BECOMES, BEGINSYM, ENDSYM, IFSYM, THENSYM,
 	WHILESYM, WRITESYM, READSYM, DOSYM, CALLSYM,
-	CONSTSYM, VARSYM, PROCSYM, PROGSYM, TIMESEQ, ELSESYM, DIVEQ, FORSYM, STEPSYM, UNTILSYM, AND, OR, NOT,SYMBOLNUM //SYMBOLNUM :标识符总数量
+	CONSTSYM, VARSYM, PROCSYM, PROGSYM, TIMESEQ, ELSESYM, DIVEQ, FORSYM, STEPSYM, UNTILSYM, AND, OR, NOT,CHARSYM,SYMBOLNUM //SYMBOLNUM :标识符总数量
 } SYMBOL;
 
 const char *SYMOUT[] = { "NUL", "IDENT", "NUMBER", "PLUS", "MINUS", "TIMES",
@@ -36,10 +36,10 @@ const char *SYMOUT[] = { "NUL", "IDENT", "NUMBER", "PLUS", "MINUS", "TIMES",
 	"LPAREN", "RPAREN", "COMMA", "SEMICOLON", "PERIOD",
 	"BECOMES", "BEGINSYM", "ENDSYM", "IFSYM", "THENSYM",
 	"WHILESYM", "WRITESYM", "READSYM", "DOSYM", "CALLSYM",
-	"CONSTSYM", "VARSYM", "PROCSYM", "PROGSYM", "TIMESEQ" ,"ELSESYM", "DIVEQ","FORSYM","STEPSYM","UNTILSYM","AND","OR","NOT"};
+	"CONSTSYM", "VARSYM", "PROCSYM", "PROGSYM", "TIMESEQ" ,"ELSESYM", "DIVEQ","FORSYM","STEPSYM","UNTILSYM","AND","OR","NOT","CHAR"};
 typedef  int *SYMSET; // SET OF SYMBOL;S
 typedef  char ALFA[11];
-typedef  enum { CONSTANT, VARIABLE, PROCEDUR } OBJECTS;//标识符类型
+typedef  enum { CONSTANT, VARIABLE, PROCEDUR ,CHAR} OBJECTS;//标识符类型
 typedef  enum { LIT, OPR, LOD, STO, CAL, INI, JMP, JPC } FCT;
 typedef struct {
 	FCT F;     /*FUNCTION CODE*/
@@ -207,10 +207,11 @@ void GetSym() {
 		strcpy(ID, A); i = 1; J = NORW;
 		do {
 			K = (i + J) / 2;
-			if (strcmp(ID, KWORD[K]) <= 0) J = K - 1;
-			if (strcmp(ID, KWORD[K]) >= 0) i = K + 1;
+			if (strcmp(ID, KWORD[K]) < 0) J = K - 1;
+			else if (strcmp(ID, KWORD[K]) > 0) i = K + 1;
+			else break;
 		} while (i <= J);
-		if (i - 1 > J) SYM = WSYM[K];
+		if (i <= J) SYM = WSYM[K];
 		else SYM = IDENT;
 	}
 	else
@@ -373,6 +374,22 @@ void ConstDeclaration(int LEV, int &TX, int &DX) {
 	}
 	else Error(4);
 } /*ConstDeclaration()*/
+
+//CHAR类型处理函数
+
+void CharDeclaration(int LEV, int &TX, int &DX)
+{
+	if(SYM == IDENT)
+	{
+		//记录在符号表
+		ENTER(CHAR,LEV,TX,DX);
+		GetSym();
+	}
+	else
+	{
+		Error(4);
+	}
+}
 //---------------------------------------------------------------------------
 void VarDeclaration(int LEV, int &TX, int &DX) {
 	if (SYM == IDENT) { ENTER(VARIABLE, LEV, TX, DX); GetSym(); }
@@ -700,6 +717,23 @@ void Block(int LEV, int TX, SYMSET FSYS) {
 				else Error(5);
 			} while (SYM == IDENT);
 		}
+		//CHAR变量的定义方法为CHAR A,B;C,D;
+		if(SYM == CHARSYM)
+		{
+			GetSym();
+			do{
+				CharDeclaration(LEV, TX, DX);
+				while(SYM == COMMA)
+				{
+					GetSym();
+					CharDeclaration(LEV, TX, DX);
+				}
+				if(SYM == SEMICOLON)
+					GetSym();
+				else
+					Error(5);
+			}while(SYM == IDENT);
+		}
 		while (SYM == PROCSYM) {
 			GetSym();
 			if (SYM == IDENT) { ENTER(PROCEDUR, LEV, TX, DX); GetSym(); }
@@ -802,6 +836,7 @@ void run() {
 	//关键字单词，共NORW个
 	i = 1;
 	strcpy(KWORD[i++], "BEGIN");    strcpy(KWORD[i++], "CALL");
+	strcpy(KWORD[i++], "CHAR");
 	strcpy(KWORD[i++], "CONST");    strcpy(KWORD[i++], "DO");
 	strcpy(KWORD[i++], "ELSE");     strcpy(KWORD[i++], "END");
 	strcpy(KWORD[i++], "FOR");      strcpy(KWORD[i++], "IF");
@@ -814,6 +849,7 @@ void run() {
 	//关键字
 	i = 1;
 	WSYM[i++] = BEGINSYM;   WSYM[i++] = CALLSYM;
+	WSYM[i++] = CHARSYM;
 	WSYM[i++] = CONSTSYM;   WSYM[i++] = DOSYM;
 	WSYM[i++] = ELSESYM;    WSYM[i++] = ENDSYM;
 	WSYM[i++] = FORSYM;     WSYM[i++] = IFSYM;
@@ -852,6 +888,7 @@ void run() {
 	DECLBEGSYS[CONSTSYM] = 1;
 	DECLBEGSYS[VARSYM] = 1;
 	DECLBEGSYS[PROCSYM] = 1;
+	DECLBEGSYS[CHARSYM] = 1;
 	STATBEGSYS[BEGINSYM] = 1;
 	STATBEGSYS[CALLSYM] = 1;
 	STATBEGSYS[IFSYM] = 1;
