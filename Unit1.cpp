@@ -271,7 +271,24 @@ void GetSym() {
 				else if (CH == '/')
 				{
 					GetCh();
-					if (CH == '=')
+					if(CH == '*')	//多行注释处理
+					{
+						do
+						{
+							GetCh();
+							if(CH == '*')
+							{
+								GetCh();
+								if(CH == '/')
+									break;
+							}
+						}while(CH != 0);
+						if(CH == 0)
+							Error(37);
+						else
+							GetCh();
+					}
+					else if (CH == '=')
 					{
 						SYM = DIVEQ;
 						GetCh();

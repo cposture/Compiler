@@ -8,6 +8,9 @@ BEGIN
 		READ(A);
 		READ(B);
 		
+		/*
+		aB
+		*/
 		IF A<>B THEN
 			WRITE(A);
 
