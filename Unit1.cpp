@@ -45,7 +45,7 @@ typedef  enum { LIT, OPR, LOD, STO, CAL, INI, JMP, JPC } FCT;
 typedef struct {
 	FCT F;     /*FUNCTION CODE*/
 	int L; 	/*0..LEVMAX  LEVEL*/
-	int A;     /*0..AMAX    DISPLACEMENT ADDR*/
+	double  A;     /*0..AMAX    DISPLACEMENT ADDR*/
 } INSTRUCTION;
 /* LIT O A -- LOAD CONSTANT A             */
 /* OPR 0 A -- EXECUTE OPR A               */
@@ -86,6 +86,14 @@ int ERR;
 
 void EXPRESSION(SYMSET FSYS, int LEV, int &TX);
 void TERM(SYMSET FSYS, int LEV, int &TX);
+
+void bitCharge(void *sour, void *des, int length)
+{
+	unsigned char *t_sour = (unsigned char*)sour;
+	unsigned char *t_des = (unsigned char*)des;
+	for(int i = 0; i < length; i++)
+		t_des[i] = t_sour[i];
+}
 //---------------------------------------------------------------------------
 //SYMSET为int型指针，如果存在某一SYMBOL（int型）则以该SYMBOL为索引的单元为1
 int SymIn(SYMBOL SYM, SYMSET S1) {
@@ -403,8 +411,8 @@ void ENTER(OBJECTS K, int LEV, int &TX, int &DX) { /*ENTER OBJECT INTO TABLE*/
 		case CHAR:
 			TABLE[TX].vp.LEVEL = LEV; TABLE[TX].vp.ADR = DX; DX++;
 			break;
-		case DOUBLE://double占8个字节
-			TABLE[TX].vp.LEVEL = LEV; TABLE[TX].vp.ADR = DX; DX+=8;
+		case DOUBLE://这里double占4个字节
+			TABLE[TX].vp.LEVEL = LEV; TABLE[TX].vp.ADR = DX; DX++;
 			break;
 		case PROCEDUR:
 			TABLE[TX].vp.LEVEL = LEV;
@@ -471,9 +479,9 @@ void ListCode(int CX0) {  /*LIST CODE GENERATED FOR THIS Block*/
 		for (int i = CX0; i < CX; i++) {
 			string s = std::to_string(i);
 			while (s.length() < 3)s = " " + s;
-			s = s + " " + MNEMONIC[CODE[i].F] + " " + std::to_string(CODE[i].L) + " " + std::to_string(CODE[i].A);
+			s = s + " " + MNEMONIC[CODE[i].F] + " " + std::to_string(CODE[i].L) + " " + std::to_string((int)CODE[i].A);
 			cout << s << endl;
-			fprintf(FOUT, "%3d%5s%4d%4d\n", i, MNEMONIC[CODE[i].F], CODE[i].L, CODE[i].A);
+			fprintf(FOUT, "%3d%5s%4d%4f\n", i, MNEMONIC[CODE[i].F], CODE[i].L, CODE[i].A);
 		}
 } /*ListCode()*/;
 //---------------------------------------------------------------------------
@@ -502,7 +510,7 @@ void FACTOR(SYMSET FSYS, int LEV, int &TX) {
 			}
 			else if(SYM == DOUBLENUM)
 			{
-				GEN(LIT, 0, DOUBLENUM);
+				GEN(LIT, 0, DNUM);
 				GetSym();
 			}
 			else
@@ -647,8 +655,27 @@ void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
 			if (SYM == LPAREN) {
 				do {
 					GetSym();
-					EXPRESSION(SymSetUnion(SymSetNew(RPAREN, COMMA), FSYS), LEV, TX);
+					if(SYM == IDENT)
+					{
+						i = POSITION(ID,TX);
+						if(i == 0)
+							Error(11);
+						if(TABLE[i].KIND == CHAR)
+						{
+							EXPRESSION(SymSetUnion(SymSetNew(RPAREN, COMMA), FSYS), LEV, TX);
+						GEN(OPR,0,18);
+						}
+						else
+						{
+							EXPRESSION(SymSetUnion(SymSetNew(RPAREN, COMMA), FSYS), LEV, TX);
+						GEN(OPR, 0, 14);
+						}
+					}
+					else
+					{
+						EXPRESSION(SymSetUnion(SymSetNew(RPAREN, COMMA), FSYS), LEV, TX);
 					GEN(OPR, 0, 14);
+					}
 				} while (SYM == COMMA);
 				if (SYM != RPAREN) Error(SYMBOLNUM);
 				else GetSym();
@@ -855,7 +882,7 @@ void Block(int LEV, int TX, SYMSET FSYS) {
 	ListCode(CX0);
 } /*Block*/
 //---------------------------------------------------------------------------
-int BASE(int L, int B, int S[]) {
+int BASE(int L, int B, double S[]) {
 	int B1 = B; /*FIND BASE L LEVELS DOWN*/
 	while (L > 0) { B1 = S[B1]; L = L - 1; }
 	return B1;
@@ -864,8 +891,9 @@ int BASE(int L, int B, int S[]) {
 void Interpret() {
 	const int STACKSIZE = 500;
 	int P, B, T; 		/*PROGRAM BASE TOPSTACK REGISTERS*/
+	char ch;
 	INSTRUCTION I;
-	int S[STACKSIZE];  	/*DATASTORE*/
+	double S[STACKSIZE];  	/*DATASTORE*/
 	cout << "~~~ RUN PL0 ~~~" << endl;
 	fprintf(FOUT, "~~~ RUN PL0 ~~~\n");
 	T = 0; B = 1; P = 0;
@@ -875,31 +903,32 @@ void Interpret() {
 		switch (I.F) {
 			case LIT: T++; S[T] = I.A; break;
 			case OPR:
-					  switch (I.A) { /*OPERATOR*/
+					  switch ((int)I.A) { /*OPERATOR*/
 						  case 0: /*RETURN*/ T = B - 1; P = S[T + 3]; B = S[T + 2]; break;
 						  case 1: S[T] = -S[T];  break;
 						  case 2: T--; S[T] = S[T] + S[T + 1];   break;
 						  case 3: T--; S[T] = S[T] - S[T + 1];   break;
 						  case 4: T--; S[T] = S[T] * S[T + 1];   break;
 						  case 5: T--; S[T] = S[T] / S[T + 1]; break;
-						  case 6: S[T] = (S[T] % 2 != 0);        break;
+						  case 6: S[T] = ((int)S[T] % 2 != 0);        break;
 						  case 8: T--; S[T] = S[T] == S[T + 1];  break;
 						  case 9: T--; S[T] = S[T] != S[T + 1];  break;
 						  case 10: T--; S[T] = S[T]<S[T + 1];   break;
 						  case 11: T--; S[T] = S[T] >= S[T + 1];  break;
 						  case 12: T--; S[T] = S[T]>S[T + 1];   break;
 						  case 13: T--; S[T] = S[T] <= S[T + 1];  break;
-						  case 14: cout << S[T] << endl; fprintf(FOUT, "%d\n", S[T]); T--;
+						  case 14: cout << S[T] << endl; fprintf(FOUT, "%d\n", (int)S[T]); T--;
 								   break;
 						  case 15: /*Form1->printfs(""); fprintf(FOUT,"\n"); */ break;
 						  case 16: T++;  cout << "please input:" << endl; cin >> S[T];
-								   fprintf(FOUT, "? %d\n", S[T]);
+								   fprintf(FOUT, "? %d\n", (int)S[T]);
 								   break;
 						  case 17: S[T] = !S[T]; break;
+						  case 18: ch = S[T];cout << ch << endl; T--;
 					  }
 					  break;
-			case LOD: T++; S[T] = S[BASE(I.L, B, S) + I.A]; break;
-			case STO: S[BASE(I.L, B, S) + I.A] = S[T]; T--; break;
+			case LOD: T++; S[T] = S[BASE(I.L, B, S) + (int)I.A]; break;
+			case STO: S[BASE(I.L, B, S) + (int)I.A] = S[T]; T--; break;
 			case CAL: /*GENERAT NEW Block MARK*/
 					  S[T + 1] = BASE(I.L, B, S); S[T + 2] = B; S[T + 3] = P;
 					  B = T + 1; P = I.A; break;

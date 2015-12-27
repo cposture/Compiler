@@ -10,9 +10,10 @@ BEGIN
 		READ(A);
 		READ(B);
 		
-		D := '1'; /* CHAR type*/
+		D := 'a'; /* CHAR type*/
 		E := 1.0;
 		WRITE(D);
+		WRITE(E);
 		/*
 			multiline-comments
 		*/
