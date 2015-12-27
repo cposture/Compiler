@@ -11,6 +11,7 @@ BEGIN
 		READ(B);
 		
 		D := '1'; /* CHAR type*/
+		E := 1.0;
 		WRITE(D);
 		/*
 			multiline-comments

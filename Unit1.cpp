@@ -9,6 +9,7 @@
 #include <string>
 #include <iostream>
 #include <cstring>
+#include <cmath>
 #include "Unit1.h"
 
 using namespace std;
@@ -28,7 +29,7 @@ typedef enum  {
 	LPAREN, RPAREN, COMMA, SEMICOLON, PERIOD,
 	BECOMES, BEGINSYM, ENDSYM, IFSYM, THENSYM,
 	WHILESYM, WRITESYM, READSYM, DOSYM, CALLSYM,
-	CONSTSYM, VARSYM, PROCSYM, PROGSYM, TIMESEQ, ELSESYM, DIVEQ, FORSYM, STEPSYM, UNTILSYM, AND, OR, NOT,CHARSYM,DOUBLESYM,SYMBOLNUM //SYMBOLNUM :标识符总数量
+	CONSTSYM, VARSYM, PROCSYM, PROGSYM, TIMESEQ, ELSESYM, DIVEQ, FORSYM, STEPSYM, UNTILSYM, AND, OR, NOT,CHARSYM,DOUBLESYM,DOUBLENUM,SYMBOLNUM //SYMBOLNUM :标识符总数量
 } SYMBOL;
 
 const char *SYMOUT[] = { "NUL", "IDENT", "NUMBER", "PLUS", "MINUS", "TIMES",
@@ -36,7 +37,7 @@ const char *SYMOUT[] = { "NUL", "IDENT", "NUMBER", "PLUS", "MINUS", "TIMES",
 	"LPAREN", "RPAREN", "COMMA", "SEMICOLON", "PERIOD",
 	"BECOMES", "BEGINSYM", "ENDSYM", "IFSYM", "THENSYM",
 	"WHILESYM", "WRITESYM", "READSYM", "DOSYM", "CALLSYM",
-	"CONSTSYM", "VARSYM", "PROCSYM", "PROGSYM", "TIMESEQ" ,"ELSESYM", "DIVEQ","FORSYM","STEPSYM","UNTILSYM","AND","OR","NOT","CHAR","DOUBLE"};
+	"CONSTSYM", "VARSYM", "PROCSYM", "PROGSYM", "TIMESEQ" ,"ELSESYM", "DIVEQ","FORSYM","STEPSYM","UNTILSYM","AND","OR","NOT","CHAR","DOUBLE","DOUBLENUM"};
 typedef  int *SYMSET; // SET OF SYMBOL;S
 typedef  char ALFA[11];
 typedef  enum { CONSTANT, VARIABLE, PROCEDUR ,CHAR, DOUBLE} OBJECTS;//标识符类型
@@ -58,6 +59,7 @@ char   CH;  /*LAST CHAR READ*/
 SYMBOL SYM; /*LAST SYMBOL READ*/
 ALFA   ID;  /*LAST IDENTIFIER READ*/
 int    NUM; /*LAST NUMBER READ*/
+double DNUM;	//最近读入的实数
 int    CC;  /*CHARACTER COUNT*/
 int    LL;  /*LINE LENGTH*/
 int    CX;  /*CODE ALLOCATION INDEX*/
@@ -240,13 +242,40 @@ void GetSym() {
 		}
 	}
 	else
-		if (CH >= '0' && CH <= '9') { /*NUMBER*/
-			K = 0; NUM = 0; SYM = NUMBER;
-			do {
-				NUM = 10 * NUM + (CH - '0');
-				K++; GetCh();
-			} while (CH >= '0' && CH <= '9');
-			if (K > NMAX) Error(30);
+		if(CH >= '0' && CH <= '9')//这里不能加上.,否则在处理"END."时，会把后面的"."处理成DOUBLENUM，而不是PERIOD
+		{
+			//同时处理整数和实数
+			std::string s;
+			int real = 0;
+			K = 0;
+			do{
+				if(CH == '.')
+					real++;
+				if(real > 1)
+					Error(30);		
+				s.push_back(CH);
+				K++;
+				GetCh();
+			}while((CH >= '0' && CH <= '9') || CH == '.');
+			if(real == 0)
+			{
+				if(K > NMAX)
+					Error(30);
+				NUM = std::atoi(s.c_str());
+				SYM = NUMBER;
+			}
+			else if(real == 1)
+			{
+				DNUM = std::atof(s.c_str());
+				SYM = DOUBLENUM;
+			}
+		//if(CH >= '0' && CH <= '9') { /*NUMBER*/
+		//	K = 0; NUM = 0; SYM = NUMBER;
+		//	do {
+		//		NUM = 10 * NUM + (CH - '0');
+		//		K++; GetCh();
+		//	} while (CH >= '0' && CH <= '9');
+		//	if (K > NMAX) Error(30);
 		}
 		else //运算符处理（分多个字节和一个字节）
 			if (CH == ':') {
@@ -471,6 +500,11 @@ void FACTOR(SYMSET FSYS, int LEV, int &TX) {
 				if (NUM > AMAX) { Error(31); NUM = 0; }
 				GEN(LIT, 0, NUM); GetSym();
 			}
+			else if(SYM == DOUBLENUM)
+			{
+				GEN(LIT, 0, DOUBLENUM);
+				GetSym();
+			}
 			else
 				if (SYM == LPAREN) {
 					GetSym(); EXPRESSION(SymSetAdd(RPAREN, FSYS), LEV, TX);
@@ -550,7 +584,7 @@ void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
 			if (i == 0) Error(11);
 			else
 				//添加字符类型的识别
-				if (TABLE[i].KIND != VARIABLE && TABLE[i].KIND != CHAR) { /*ASSIGNMENT TO NON-VARIABLE*/
+				if (TABLE[i].KIND != VARIABLE && TABLE[i].KIND != CHAR && TABLE[i].KIND != DOUBLE) { /*ASSIGNMENT TO NON-VARIABLE*/
 					Error(12); i = 0;
 				}
 			GetSym();
@@ -961,6 +995,7 @@ void run() {
 	STATBEGSYS[WRITESYM] = 1;
 	FACBEGSYS[IDENT] = 1;
 	FACBEGSYS[NUMBER] = 1;
+	FACBEGSYS[DOUBLENUM] = 1;
 	FACBEGSYS[LPAREN] = 1;
 
 	if ((FIN = fopen(EditNamein.c_str(), "r")) != 0)
