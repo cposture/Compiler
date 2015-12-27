@@ -15,7 +15,7 @@ using namespace std;
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 #define  AL  10  /* LENGTH OF IDENTIFIERS */
-#define  NORW  19  /* # OF RESERVED WORDS */
+#define  NORW  20  /* # OF RESERVED WORDS */
 #define  TXMAX  100  /* LENGTH OF IDENTIFIER TABLE */
 #define  NMAX     14  /* MAX NUMBER OF DEGITS IN NUMBERS */
 #define  AMAX   2047  /* MAXIMUM ADDRESS */
@@ -28,7 +28,7 @@ typedef enum  {
 	LPAREN, RPAREN, COMMA, SEMICOLON, PERIOD,
 	BECOMES, BEGINSYM, ENDSYM, IFSYM, THENSYM,
 	WHILESYM, WRITESYM, READSYM, DOSYM, CALLSYM,
-	CONSTSYM, VARSYM, PROCSYM, PROGSYM, TIMESEQ, ELSESYM, DIVEQ, FORSYM, STEPSYM, UNTILSYM, AND, OR, NOT,CHARSYM,SYMBOLNUM //SYMBOLNUM :标识符总数量
+	CONSTSYM, VARSYM, PROCSYM, PROGSYM, TIMESEQ, ELSESYM, DIVEQ, FORSYM, STEPSYM, UNTILSYM, AND, OR, NOT,CHARSYM,DOUBLESYM,SYMBOLNUM //SYMBOLNUM :标识符总数量
 } SYMBOL;
 
 const char *SYMOUT[] = { "NUL", "IDENT", "NUMBER", "PLUS", "MINUS", "TIMES",
@@ -36,10 +36,10 @@ const char *SYMOUT[] = { "NUL", "IDENT", "NUMBER", "PLUS", "MINUS", "TIMES",
 	"LPAREN", "RPAREN", "COMMA", "SEMICOLON", "PERIOD",
 	"BECOMES", "BEGINSYM", "ENDSYM", "IFSYM", "THENSYM",
 	"WHILESYM", "WRITESYM", "READSYM", "DOSYM", "CALLSYM",
-	"CONSTSYM", "VARSYM", "PROCSYM", "PROGSYM", "TIMESEQ" ,"ELSESYM", "DIVEQ","FORSYM","STEPSYM","UNTILSYM","AND","OR","NOT","CHAR"};
+	"CONSTSYM", "VARSYM", "PROCSYM", "PROGSYM", "TIMESEQ" ,"ELSESYM", "DIVEQ","FORSYM","STEPSYM","UNTILSYM","AND","OR","NOT","CHAR","DOUBLE"};
 typedef  int *SYMSET; // SET OF SYMBOL;S
 typedef  char ALFA[11];
-typedef  enum { CONSTANT, VARIABLE, PROCEDUR ,CHAR} OBJECTS;//标识符类型
+typedef  enum { CONSTANT, VARIABLE, PROCEDUR ,CHAR, DOUBLE} OBJECTS;//标识符类型
 typedef  enum { LIT, OPR, LOD, STO, CAL, INI, JMP, JPC } FCT;
 typedef struct {
 	FCT F;     /*FUNCTION CODE*/
@@ -374,6 +374,9 @@ void ENTER(OBJECTS K, int LEV, int &TX, int &DX) { /*ENTER OBJECT INTO TABLE*/
 		case CHAR:
 			TABLE[TX].vp.LEVEL = LEV; TABLE[TX].vp.ADR = DX; DX++;
 			break;
+		case DOUBLE://double占8个字节
+			TABLE[TX].vp.LEVEL = LEV; TABLE[TX].vp.ADR = DX; DX+=8;
+			break;
 		case PROCEDUR:
 			TABLE[TX].vp.LEVEL = LEV;
 			break;
@@ -416,6 +419,18 @@ void CharDeclaration(int LEV, int &TX, int &DX)
 		Error(4);
 	}
 }
+
+//double类型处理
+
+void DoubleDeclaration(int LEV, int &TX, int &DX)
+{
+	if(SYM == IDENT)
+	{
+		//记录在符号表
+		ENTER(DOUBLE, LEV, TX, DX);
+		GetSym();
+	}
+}
 //---------------------------------------------------------------------------
 void VarDeclaration(int LEV, int &TX, int &DX) {
 	if (SYM == IDENT) { ENTER(VARIABLE, LEV, TX, DX); GetSym(); }
@@ -445,6 +460,7 @@ void FACTOR(SYMSET FSYS, int LEV, int &TX) {
 					case CONSTANT: GEN(LIT, 0, TABLE[i].VAL); break;
 					case VARIABLE: 
 					case CHAR:
+					case DOUBLE:
 							GEN(LOD, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR); break;
 					case PROCEDUR: Error(21); break;
 				}
@@ -763,6 +779,23 @@ void Block(int LEV, int TX, SYMSET FSYS) {
 					Error(5);
 			}while(SYM == IDENT);
 		}
+		//DOUBLE类型
+		if(SYM == DOUBLESYM)
+		{
+			GetSym();
+			do{
+				DoubleDeclaration(LEV,TX,DX);
+				while(SYM == COMMA)
+				{
+					GetSym();
+					DoubleDeclaration(LEV, TX, DX);
+				}
+				if(SYM == SEMICOLON)
+					GetSym();
+				else
+					Error(5);
+			}while(SYM == IDENT);
+		}
 		while (SYM == PROCSYM) {
 			GetSym();
 			if (SYM == IDENT) { ENTER(PROCEDUR, LEV, TX, DX); GetSym(); }
@@ -867,6 +900,7 @@ void run() {
 	strcpy(KWORD[i++], "BEGIN");    strcpy(KWORD[i++], "CALL");
 	strcpy(KWORD[i++], "CHAR");
 	strcpy(KWORD[i++], "CONST");    strcpy(KWORD[i++], "DO");
+	strcpy(KWORD[i++], "DOUBLE");
 	strcpy(KWORD[i++], "ELSE");     strcpy(KWORD[i++], "END");
 	strcpy(KWORD[i++], "FOR");      strcpy(KWORD[i++], "IF");
 	strcpy(KWORD[i++], "ODD");      strcpy(KWORD[i++], "PROCEDURE");
@@ -880,6 +914,7 @@ void run() {
 	WSYM[i++] = BEGINSYM;   WSYM[i++] = CALLSYM;
 	WSYM[i++] = CHARSYM;
 	WSYM[i++] = CONSTSYM;   WSYM[i++] = DOSYM;
+	WSYM[i++] = DOUBLESYM;
 	WSYM[i++] = ELSESYM;    WSYM[i++] = ENDSYM;
 	WSYM[i++] = FORSYM;     WSYM[i++] = IFSYM;
 	WSYM[i++] = ODDSYM;     WSYM[i++] = PROCSYM;
@@ -918,6 +953,7 @@ void run() {
 	DECLBEGSYS[VARSYM] = 1;
 	DECLBEGSYS[PROCSYM] = 1;
 	DECLBEGSYS[CHARSYM] = 1;
+	DECLBEGSYS[DOUBLESYM] = 1;
 	STATBEGSYS[BEGINSYM] = 1;
 	STATBEGSYS[CALLSYM] = 1;
 	STATBEGSYS[IFSYM] = 1;
