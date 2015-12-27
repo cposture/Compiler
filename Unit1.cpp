@@ -214,6 +214,31 @@ void GetSym() {
 		if (i <= J) SYM = WSYM[K];
 		else SYM = IDENT;
 	}
+	else if(CH == '\'')
+	{
+		std::string s;
+		
+		GetCh();
+		while(CH != '\'')
+		{
+			s.push_back(CH);
+			GetCh();
+		}
+		GetCh();
+		if(s.length() == 0)
+		{
+			Error(38);
+		}
+		else if(s.length() == 1)
+		{
+			NUM = s[0];
+			SYM = NUMBER;
+		}
+		else
+		{
+		//字符串
+		}
+	}
 	else
 		if (CH >= '0' && CH <= '9') { /*NUMBER*/
 			K = 0; NUM = 0; SYM = NUMBER;
@@ -346,6 +371,7 @@ void ENTER(OBJECTS K, int LEV, int &TX, int &DX) { /*ENTER OBJECT INTO TABLE*/
 			TABLE[TX].VAL = NUM;
 			break;
 		case VARIABLE:
+		case CHAR:
 			TABLE[TX].vp.LEVEL = LEV; TABLE[TX].vp.ADR = DX; DX++;
 			break;
 		case PROCEDUR:
@@ -417,7 +443,9 @@ void FACTOR(SYMSET FSYS, int LEV, int &TX) {
 			else
 				switch (TABLE[i].KIND) {
 					case CONSTANT: GEN(LIT, 0, TABLE[i].VAL); break;
-					case VARIABLE: GEN(LOD, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR); break;
+					case VARIABLE: 
+					case CHAR:
+							GEN(LOD, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR); break;
 					case PROCEDUR: Error(21); break;
 				}
 			GetSym();
@@ -505,7 +533,8 @@ void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
 			i = POSITION(ID, TX);
 			if (i == 0) Error(11);
 			else
-				if (TABLE[i].KIND != VARIABLE) { /*ASSIGNMENT TO NON-VARIABLE*/
+				//添加字符类型的识别
+				if (TABLE[i].KIND != VARIABLE && TABLE[i].KIND != CHAR) { /*ASSIGNMENT TO NON-VARIABLE*/
 					Error(12); i = 0;
 				}
 			GetSym();

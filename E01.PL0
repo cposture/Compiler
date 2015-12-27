@@ -8,10 +8,15 @@ BEGIN
 		
 		READ(A);
 		READ(B);
-	
+		
+		D := '1'; /* CHAR type*/
+		WRITE(D);
 		/*
-		aB
+			multiline-comments
 		*/
+
+		/* singleline-comments */
+		
 		IF A<>B THEN
 			WRITE(A);
 
