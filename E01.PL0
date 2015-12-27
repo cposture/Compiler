@@ -1,6 +1,7 @@
 PROGRAM EX01; 
 VAR A,B,C; 
 CHAR D;
+DOUBLE E;
 BEGIN
 	FOR C:=1 STEP 1 UNTIL 2 DO
 	BEGIN
@@ -9,8 +10,10 @@ BEGIN
 		READ(A);
 		READ(B);
 		
-		D := '1'; /* CHAR type*/
+		D := 'a'; /* CHAR type*/
+		E := 1.0;
 		WRITE(D);
+		WRITE(E);
 		/*
 			multiline-comments
 		*/
