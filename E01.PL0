@@ -1,48 +1,10 @@
 PROGRAM EX01; 
-VAR A,B,C; 
-CHAR D,F[2];
-DOUBLE E;
+CHAR A[2];
 BEGIN
-	FOR C:=1 STEP 1 UNTIL 2 DO
-	BEGIN
-		WRITE(C);
-		
-		READ(A);
-		READ(B);
-		
-		D := 'a'; /* CHAR type*/
-		E := 1.0;
-		WRITE(D);
-		WRITE(E);
-		/*
-			multiline-comments
-		*/
-
-		/* singleline-comments */
-		
-		IF A<>B THEN
-			WRITE(A);
-
-		IF A||B THEN
-			WRITE(1);
-		ELSE
-			WRITE(0);
-		
-		IF !A THEN
-			WRITE(0);
-		ELSE
-			WRITE(1);
-		
-		IF A&B THEN
-			WRITE(1);
-		ELSE
-			WRITE(0);
-		
-		A*=2;
-		WRITE(A);
-		A/=2;
-		WRITE(A);
-	END;
+	A[0] := 'a';
+	A[1] := 'b';
+	WRITE(A[0]);
+	WRITE(A[1]);
 END.
 
 

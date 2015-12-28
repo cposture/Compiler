@@ -222,6 +222,26 @@ void GetSym() {
 			else break;
 		} while (i <= J);
 		if (i <= J) SYM = WSYM[K];
+		else if(CH == '[')
+		{
+			GetCh();
+			GetSym();
+			if(SYM == NUMBER)
+			{
+				if(CH == ']')
+				{
+					SYM = ARRAYSYM;
+					GetCh();
+				}
+				else
+					Error(40);
+			}
+			else
+			{
+				Error(39);
+			}
+
+		}
 		else SYM = IDENT;
 	}
 	else if(CH == '\'')
@@ -453,33 +473,15 @@ void CharDeclaration(int LEV, int &TX, int &DX)
 {
 	if(SYM == IDENT)
 	{
+		//记录在符号表
+		ENTER(CHAR,LEV,TX,DX);
 		GetSym();
-		if(SYM == LEFTSQ)
-		{
-			GetSym();
-			if(SYM == NUMBER)
-			{
-				GetSym();
-				if(SYM == RIGHTSQ)
-				{
-					GetSym();
-					ENTER(ARRAY,LEV,TX,DX);			
-				}
-				else
-				{
-					Error(40);
-				}
-			}
-			else
-			{
-				Error(39);
-			}
-		}
-		else
-		{
-			//记录在符号表
-			ENTER(CHAR,LEV,TX,DX);
-		}
+	}
+	else if(SYM == ARRAYSYM)
+	{
+		ENTER(ARRAY,LEV,TX,DX);		
+		TABLE[TX].KIND = CHAR;
+		GetSym();
 	}
 	else
 	{
@@ -530,6 +532,19 @@ void FACTOR(SYMSET FSYS, int LEV, int &TX) {
 					case DOUBLE:
 							GEN(LOD, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR); break;
 					case PROCEDUR: Error(21); break;
+				}
+			GetSym();
+		}
+		else if(SYM == ARRAYSYM)
+		{
+			i = POSITION(ID,TX);
+			if(i == 0)
+				Error(11);
+			else
+				switch(TABLE[i].KIND)
+				{
+					case CHAR:
+							GEN(LOD, LEV - TABLE[i+NUM].vp.LEVEL, TABLE[i+NUM].vp.ADR); break;
 				}
 			GetSym();
 		}
@@ -615,16 +630,22 @@ void CONDITION(SYMSET FSYS, int LEV, int &TX) {
 //---------------------------------------------------------------------------
 void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
 	int i, CX1, CX2,CX3;
-	SYMBOL sym_temp;
+	SYMBOL sym_temp,asym = SYM;//asym存放当前的符号
+	int n;
 	switch (SYM) {
 		case IDENT:
+		case ARRAYSYM:
 			i = POSITION(ID, TX);
 			if (i == 0) Error(11);
 			else
 				//添加字符类型的识别
-				if (TABLE[i].KIND != VARIABLE && TABLE[i].KIND != CHAR && TABLE[i].KIND != DOUBLE) { /*ASSIGNMENT TO NON-VARIABLE*/
+				if (TABLE[i].KIND != VARIABLE 
+						&& TABLE[i].KIND != CHAR 
+						&& TABLE[i].KIND != DOUBLE 
+						&& TABLE[i].KIND != ARRAY) { /*ASSIGNMENT TO NON-VARIABLE*/
 					Error(12); i = 0;
 				}
+			n = NUM;//存在数组的下标
 			GetSym();
 			if (SYM == BECOMES) { sym_temp = SYM; GetSym(); }
 			else if (SYM == TIMESEQ) { sym_temp = SYM; GetSym(); }
@@ -636,7 +657,12 @@ void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
 				{
 					//计算表达式的值,并将值放在栈顶
 					EXPRESSION(FSYS, LEV, TX);
-					GEN(STO, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR);
+					if(asym == ARRAYSYM)
+					{
+						GEN(STO, LEV - TABLE[i+n].vp.LEVEL, TABLE[i+n].vp.ADR);
+					}
+					else
+						GEN(STO, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR);
 				}    
 				else if (sym_temp == TIMESEQ)
 				{
@@ -685,7 +711,7 @@ void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
 			if (SYM == LPAREN) {
 				do {
 					GetSym();
-					if(SYM == IDENT)
+					if(SYM == IDENT || SYM == ARRAYSYM)
 					{
 						i = POSITION(ID,TX);
 						if(i == 0)
@@ -693,18 +719,18 @@ void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
 						if(TABLE[i].KIND == CHAR)
 						{
 							EXPRESSION(SymSetUnion(SymSetNew(RPAREN, COMMA), FSYS), LEV, TX);
-						GEN(OPR,0,18);
+							GEN(OPR,0,18);
 						}
 						else
 						{
 							EXPRESSION(SymSetUnion(SymSetNew(RPAREN, COMMA), FSYS), LEV, TX);
-						GEN(OPR, 0, 14);
+							GEN(OPR, 0, 14);
 						}
 					}
 					else
 					{
 						EXPRESSION(SymSetUnion(SymSetNew(RPAREN, COMMA), FSYS), LEV, TX);
-					GEN(OPR, 0, 14);
+						GEN(OPR, 0, 14);
 					}
 				} while (SYM == COMMA);
 				if (SYM != RPAREN) Error(SYMBOLNUM);
@@ -1050,6 +1076,7 @@ void run() {
 	DECLBEGSYS[PROCSYM] = 1;
 	DECLBEGSYS[CHARSYM] = 1;
 	DECLBEGSYS[DOUBLESYM] = 1;
+	DECLBEGSYS[ARRAYSYM] = 1;
 	STATBEGSYS[BEGINSYM] = 1;
 	STATBEGSYS[CALLSYM] = 1;
 	STATBEGSYS[IFSYM] = 1;
@@ -1059,7 +1086,7 @@ void run() {
 	FACBEGSYS[NUMBER] = 1;
 	FACBEGSYS[DOUBLENUM] = 1;
 	FACBEGSYS[LPAREN] = 1;
-
+	FACBEGSYS[ARRAYSYM] = 1;
 	if ((FIN = fopen(EditNamein.c_str(), "r")) != 0)
 	{
 		FOUT = fopen(EditNameout.c_str(), "w");
