@@ -404,7 +404,7 @@ void GetSym() {
 				}
 } /*GetSym()*/
 //---------------------------------------------------------------------------
-void GEN(FCT X, int Y, int Z) {
+void GEN(FCT X, int Y, double Z) {
 	if (CX > CXMAX) {
 		cout << "PROGRAM TOO LONG" << endl;
 		fprintf(FOUT, "PROGRAM TOO LONG\n");
@@ -515,7 +515,7 @@ void ListCode(int CX0) {  /*LIST CODE GENERATED FOR THIS Block*/
 		for (int i = CX0; i < CX; i++) {
 			string s = std::to_string(i);
 			while (s.length() < 3)s = " " + s;
-			s = s + " " + MNEMONIC[CODE[i].F] + " " + std::to_string(CODE[i].L) + " " + std::to_string((int)CODE[i].A);
+			s = s + " " + MNEMONIC[CODE[i].F] + " " + std::to_string(CODE[i].L) + " " + std::to_string(CODE[i].A);
 			cout << s << endl;
 			fprintf(FOUT, "%3d%5s%4d%4f\n", i, MNEMONIC[CODE[i].F], CODE[i].L, CODE[i].A);
 		}
