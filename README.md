@@ -14,3 +14,10 @@ WHILE、VAR等。
 5. CHAR、DOUBLE类型
 6. CHAR型数组，目前支持常量下标
 7. 与或非运算符
+
+# 编译运行
+
+```bash
+$ make
+$ ./compiler type.PL0 # 说明程序的第一个参数是位于同目录的PL0源代码文件名
+```
