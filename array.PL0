@@ -1,0 +1,12 @@
+PROGRAM EX01; 
+CHAR B,A[2];
+BEGIN
+	A[0] := 'a';
+	A[1] := 'b';
+	B := A[0];
+	WRITE(A[0]);
+	WRITE(A[1]);
+	WRITE(B);
+END.
+
+

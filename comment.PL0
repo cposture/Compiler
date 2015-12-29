@@ -1,0 +1,4 @@
+PROGRAM EX01; 
+BEGIN
+	/* this is a test with comment */
+END.

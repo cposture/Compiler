@@ -1,0 +1,11 @@
+PROGRAM EX01; 
+VAR A;
+BEGIN
+	/*
+		this is a test with for loop and commment
+	*/
+	FOR A:=1 STEP 1 UNTIL 10 DO
+		WRITE(A);
+END.
+
+
