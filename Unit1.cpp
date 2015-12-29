@@ -71,6 +71,7 @@ SYMBOL  SSYM['^' + 1];
 ALFA    MNEMONIC[9];
 //表示声明开始的符号集合,表示语句开始的符号集,表示因子开始的符号集合
 SYMSET  DECLBEGSYS, STATBEGSYS, FACBEGSYS;
+const char *filename;
 
 struct {
 	ALFA NAME;
@@ -369,7 +370,10 @@ void GetSym() {
 						if(CH == 0)
 							Error(37);
 						else
+						{
 							GetCh();
+							GetSym();
+						}
 					}
 					else if (CH == '=')
 					{
@@ -1007,7 +1011,7 @@ void run() {
 	cout << "please input output file name(format is *.txt)" << endl;
 	cin >> EditNameout;
 #else
-	EditNamein = "E01.PL0";
+	EditNamein = filename;
 	EditNameout = "E01.txt";
 #endif
 
