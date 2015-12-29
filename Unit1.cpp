@@ -9,13 +9,14 @@
 #include <string>
 #include <iostream>
 #include <cstring>
+#include <cmath>
 #include "Unit1.h"
 
 using namespace std;
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 #define  AL  10  /* LENGTH OF IDENTIFIERS */
-#define  NORW  19  /* # OF RESERVED WORDS */
+#define  NORW  21  /* # OF RESERVED WORDS */
 #define  TXMAX  100  /* LENGTH OF IDENTIFIER TABLE */
 #define  NMAX     14  /* MAX NUMBER OF DEGITS IN NUMBERS */
 #define  AMAX   2047  /* MAXIMUM ADDRESS */
@@ -28,7 +29,7 @@ typedef enum  {
 	LPAREN, RPAREN, COMMA, SEMICOLON, PERIOD,
 	BECOMES, BEGINSYM, ENDSYM, IFSYM, THENSYM,
 	WHILESYM, WRITESYM, READSYM, DOSYM, CALLSYM,
-	CONSTSYM, VARSYM, PROCSYM, PROGSYM, TIMESEQ, ELSESYM, DIVEQ, FORSYM, STEPSYM, UNTILSYM, AND, OR, NOT,SYMBOLNUM //SYMBOLNUM :标识符总数量
+	CONSTSYM, VARSYM, PROCSYM, PROGSYM, TIMESEQ, ELSESYM, DIVEQ, FORSYM, STEPSYM, UNTILSYM, AND, OR, NOT,CHARSYM,DOUBLESYM,DOUBLENUM,ARRAYSYM,LEFTSQ,RIGHTSQ,SYMBOLNUM //SYMBOLNUM :标识符总数量
 } SYMBOL;
 
 const char *SYMOUT[] = { "NUL", "IDENT", "NUMBER", "PLUS", "MINUS", "TIMES",
@@ -36,15 +37,15 @@ const char *SYMOUT[] = { "NUL", "IDENT", "NUMBER", "PLUS", "MINUS", "TIMES",
 	"LPAREN", "RPAREN", "COMMA", "SEMICOLON", "PERIOD",
 	"BECOMES", "BEGINSYM", "ENDSYM", "IFSYM", "THENSYM",
 	"WHILESYM", "WRITESYM", "READSYM", "DOSYM", "CALLSYM",
-	"CONSTSYM", "VARSYM", "PROCSYM", "PROGSYM", "TIMESEQ" ,"ELSESYM", "DIVEQ","FORSYM","STEPSYM","UNTILSYM","AND","OR","NOT"};
+	"CONSTSYM", "VARSYM", "PROCSYM", "PROGSYM", "TIMESEQ" ,"ELSESYM", "DIVEQ","FORSYM","STEPSYM","UNTILSYM","AND","OR","NOT","CHAR","DOUBLE","DOUBLENUM","ARRAYSYM","LEFTSQ","RIGHTSQ"};
 typedef  int *SYMSET; // SET OF SYMBOL;S
 typedef  char ALFA[11];
-typedef  enum { CONSTANT, VARIABLE, PROCEDUR } OBJECTS;//标识符类型
+typedef  enum { CONSTANT, VARIABLE, PROCEDUR ,CHAR, DOUBLE, ARRAY} OBJECTS;//标识符类型
 typedef  enum { LIT, OPR, LOD, STO, CAL, INI, JMP, JPC } FCT;
 typedef struct {
 	FCT F;     /*FUNCTION CODE*/
 	int L; 	/*0..LEVMAX  LEVEL*/
-	int A;     /*0..AMAX    DISPLACEMENT ADDR*/
+	double  A;     /*0..AMAX    DISPLACEMENT ADDR*/
 } INSTRUCTION;
 /* LIT O A -- LOAD CONSTANT A             */
 /* OPR 0 A -- EXECUTE OPR A               */
@@ -58,6 +59,7 @@ char   CH;  /*LAST CHAR READ*/
 SYMBOL SYM; /*LAST SYMBOL READ*/
 ALFA   ID;  /*LAST IDENTIFIER READ*/
 int    NUM; /*LAST NUMBER READ*/
+double DNUM;	//最近读入的实数
 int    CC;  /*CHARACTER COUNT*/
 int    LL;  /*LINE LENGTH*/
 int    CX;  /*CODE ALLOCATION INDEX*/
@@ -69,13 +71,14 @@ SYMBOL  SSYM['^' + 1];
 ALFA    MNEMONIC[9];
 //表示声明开始的符号集合,表示语句开始的符号集,表示因子开始的符号集合
 SYMSET  DECLBEGSYS, STATBEGSYS, FACBEGSYS;
+const char *filename;
 
 struct {
 	ALFA NAME;
 	OBJECTS KIND;
 	union {
 		int VAL;   /*CONSTANT*/
-		struct { int LEVEL, ADR, SIZE; } vp;  /*VARIABLE,PROCEDUR:*/
+		struct { int LEVEL, ADR, SIZE, ARRDEM;} vp;  /*VARIABLE,PROCEDUR:*/
 	};
 } TABLE[TXMAX];
 
@@ -84,6 +87,14 @@ int ERR;
 
 void EXPRESSION(SYMSET FSYS, int LEV, int &TX);
 void TERM(SYMSET FSYS, int LEV, int &TX);
+
+void bitCharge(void *sour, void *des, int length)
+{
+	unsigned char *t_sour = (unsigned char*)sour;
+	unsigned char *t_des = (unsigned char*)des;
+	for(int i = 0; i < length; i++)
+		t_des[i] = t_sour[i];
+}
 //---------------------------------------------------------------------------
 //SYMSET为int型指针，如果存在某一SYMBOL（int型）则以该SYMBOL为索引的单元为1
 int SymIn(SYMBOL SYM, SYMSET S1) {
@@ -207,20 +218,93 @@ void GetSym() {
 		strcpy(ID, A); i = 1; J = NORW;
 		do {
 			K = (i + J) / 2;
-			if (strcmp(ID, KWORD[K]) <= 0) J = K - 1;
-			if (strcmp(ID, KWORD[K]) >= 0) i = K + 1;
+			if (strcmp(ID, KWORD[K]) < 0) J = K - 1;
+			else if (strcmp(ID, KWORD[K]) > 0) i = K + 1;
+			else break;
 		} while (i <= J);
-		if (i - 1 > J) SYM = WSYM[K];
+		if (i <= J) SYM = WSYM[K];
+		else if(CH == '[')
+		{
+			GetCh();
+			GetSym();
+			if(SYM == NUMBER)
+			{
+				if(CH == ']')
+				{
+					SYM = ARRAYSYM;
+					GetCh();
+				}
+				else
+					Error(40);
+			}
+			else
+			{
+				Error(39);
+			}
+
+		}
 		else SYM = IDENT;
 	}
+	else if(CH == '\'')
+	{
+		std::string s;
+		
+		GetCh();
+		while(CH != '\'')
+		{
+			s.push_back(CH);
+			GetCh();
+		}
+		GetCh();
+		if(s.length() == 0)
+		{
+			Error(38);
+		}
+		else if(s.length() == 1)
+		{
+			NUM = s[0];
+			SYM = NUMBER;
+		}
+		else
+		{
+		//字符串
+		}
+	}
 	else
-		if (CH >= '0' && CH <= '9') { /*NUMBER*/
-			K = 0; NUM = 0; SYM = NUMBER;
-			do {
-				NUM = 10 * NUM + (CH - '0');
-				K++; GetCh();
-			} while (CH >= '0' && CH <= '9');
-			if (K > NMAX) Error(30);
+		if(CH >= '0' && CH <= '9')//这里不能加上.,否则在处理"END."时，会把后面的"."处理成DOUBLENUM，而不是PERIOD
+		{
+			//同时处理整数和实数
+			std::string s;
+			int real = 0;
+			K = 0;
+			do{
+				if(CH == '.')
+					real++;
+				if(real > 1)
+					Error(30);		
+				s.push_back(CH);
+				K++;
+				GetCh();
+			}while((CH >= '0' && CH <= '9') || CH == '.');
+			if(real == 0)
+			{
+				if(K > NMAX)
+					Error(30);
+				NUM = std::atoi(s.c_str());
+				SYM = NUMBER;
+			}
+			else if(real == 1)
+			{
+				DNUM = std::atof(s.c_str());
+				SYM = DOUBLENUM;
+			}
+		//if(CH >= '0' && CH <= '9') { /*NUMBER*/
+		//	K = 0; NUM = 0; SYM = NUMBER;
+		//	do {
+		//		NUM = 10 * NUM + (CH - '0');
+		//		K++; GetCh();
+		//	} while (CH >= '0' && CH <= '9');
+		//	if (K > NMAX) Error(30);
 		}
 		else //运算符处理（分多个字节和一个字节）
 			if (CH == ':') {
@@ -271,7 +355,27 @@ void GetSym() {
 				else if (CH == '/')
 				{
 					GetCh();
-					if (CH == '=')
+					if(CH == '*')	//多行注释处理
+					{
+						do
+						{
+							GetCh();
+							if(CH == '*')
+							{
+								GetCh();
+								if(CH == '/')
+									break;
+							}
+						}while(CH != 0);
+						if(CH == 0)
+							Error(37);
+						else
+						{
+							GetCh();
+							GetSym();
+						}
+					}
+					else if (CH == '=')
 					{
 						SYM = DIVEQ;
 						GetCh();
@@ -300,7 +404,7 @@ void GetSym() {
 				}
 } /*GetSym()*/
 //---------------------------------------------------------------------------
-void GEN(FCT X, int Y, int Z) {
+void GEN(FCT X, int Y, double Z) {
 	if (CX > CXMAX) {
 		cout << "PROGRAM TOO LONG" << endl;
 		fprintf(FOUT, "PROGRAM TOO LONG\n");
@@ -328,10 +432,21 @@ void ENTER(OBJECTS K, int LEV, int &TX, int &DX) { /*ENTER OBJECT INTO TABLE*/
 			TABLE[TX].VAL = NUM;
 			break;
 		case VARIABLE:
+		case CHAR:
+			TABLE[TX].vp.LEVEL = LEV; TABLE[TX].vp.ADR = DX; DX++;
+			break;
+		case DOUBLE://这里double占4个字节
 			TABLE[TX].vp.LEVEL = LEV; TABLE[TX].vp.ADR = DX; DX++;
 			break;
 		case PROCEDUR:
 			TABLE[TX].vp.LEVEL = LEV;
+			break;
+		case ARRAY:
+			//数组所在层以及数组首地址
+			TABLE[TX].vp.LEVEL = LEV;
+			TABLE[TX].vp.ADR = DX;
+			TABLE[TX].vp.ARRDEM = NUM;
+			DX = DX + NUM;
 			break;
 	}
 } /*ENTER*/
@@ -356,6 +471,39 @@ void ConstDeclaration(int LEV, int &TX, int &DX) {
 	}
 	else Error(4);
 } /*ConstDeclaration()*/
+
+//CHAR类型处理函数
+void CharDeclaration(int LEV, int &TX, int &DX)
+{
+	if(SYM == IDENT)
+	{
+		//记录在符号表
+		ENTER(CHAR,LEV,TX,DX);
+		GetSym();
+	}
+	else if(SYM == ARRAYSYM)
+	{
+		ENTER(ARRAY,LEV,TX,DX);		
+		TABLE[TX].KIND = CHAR;
+		GetSym();
+	}
+	else
+	{
+		Error(4);
+	}
+}
+
+//double类型处理
+
+void DoubleDeclaration(int LEV, int &TX, int &DX)
+{
+	if(SYM == IDENT)
+	{
+		//记录在符号表
+		ENTER(DOUBLE, LEV, TX, DX);
+		GetSym();
+	}
+}
 //---------------------------------------------------------------------------
 void VarDeclaration(int LEV, int &TX, int &DX) {
 	if (SYM == IDENT) { ENTER(VARIABLE, LEV, TX, DX); GetSym(); }
@@ -369,7 +517,7 @@ void ListCode(int CX0) {  /*LIST CODE GENERATED FOR THIS Block*/
 			while (s.length() < 3)s = " " + s;
 			s = s + " " + MNEMONIC[CODE[i].F] + " " + std::to_string(CODE[i].L) + " " + std::to_string(CODE[i].A);
 			cout << s << endl;
-			fprintf(FOUT, "%3d%5s%4d%4d\n", i, MNEMONIC[CODE[i].F], CODE[i].L, CODE[i].A);
+			fprintf(FOUT, "%3d%5s%4d%4f\n", i, MNEMONIC[CODE[i].F], CODE[i].L, CODE[i].A);
 		}
 } /*ListCode()*/;
 //---------------------------------------------------------------------------
@@ -383,8 +531,24 @@ void FACTOR(SYMSET FSYS, int LEV, int &TX) {
 			else
 				switch (TABLE[i].KIND) {
 					case CONSTANT: GEN(LIT, 0, TABLE[i].VAL); break;
-					case VARIABLE: GEN(LOD, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR); break;
+					case VARIABLE: 
+					case CHAR:
+					case DOUBLE:
+							GEN(LOD, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR); break;
 					case PROCEDUR: Error(21); break;
+				}
+			GetSym();
+		}
+		else if(SYM == ARRAYSYM)
+		{
+			i = POSITION(ID,TX);
+			if(i == 0)
+				Error(11);
+			else
+				switch(TABLE[i].KIND)
+				{
+					case CHAR:
+							GEN(LOD, LEV - TABLE[i+NUM].vp.LEVEL, TABLE[i+NUM].vp.ADR); break;
 				}
 			GetSym();
 		}
@@ -392,6 +556,11 @@ void FACTOR(SYMSET FSYS, int LEV, int &TX) {
 			if (SYM == NUMBER) {
 				if (NUM > AMAX) { Error(31); NUM = 0; }
 				GEN(LIT, 0, NUM); GetSym();
+			}
+			else if(SYM == DOUBLENUM)
+			{
+				GEN(LIT, 0, DNUM);
+				GetSym();
 			}
 			else
 				if (SYM == LPAREN) {
@@ -465,15 +634,22 @@ void CONDITION(SYMSET FSYS, int LEV, int &TX) {
 //---------------------------------------------------------------------------
 void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
 	int i, CX1, CX2,CX3;
-	SYMBOL sym_temp;
+	SYMBOL sym_temp,asym = SYM;//asym存放当前的符号
+	int n;
 	switch (SYM) {
 		case IDENT:
+		case ARRAYSYM:
 			i = POSITION(ID, TX);
 			if (i == 0) Error(11);
 			else
-				if (TABLE[i].KIND != VARIABLE) { /*ASSIGNMENT TO NON-VARIABLE*/
+				//添加字符类型的识别
+				if (TABLE[i].KIND != VARIABLE 
+						&& TABLE[i].KIND != CHAR 
+						&& TABLE[i].KIND != DOUBLE 
+						&& TABLE[i].KIND != ARRAY) { /*ASSIGNMENT TO NON-VARIABLE*/
 					Error(12); i = 0;
 				}
+			n = NUM;//存在数组的下标
 			GetSym();
 			if (SYM == BECOMES) { sym_temp = SYM; GetSym(); }
 			else if (SYM == TIMESEQ) { sym_temp = SYM; GetSym(); }
@@ -485,7 +661,12 @@ void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
 				{
 					//计算表达式的值,并将值放在栈顶
 					EXPRESSION(FSYS, LEV, TX);
-					GEN(STO, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR);
+					if(asym == ARRAYSYM)
+					{
+						GEN(STO, LEV - TABLE[i+n].vp.LEVEL, TABLE[i+n].vp.ADR);
+					}
+					else
+						GEN(STO, LEV - TABLE[i].vp.LEVEL, TABLE[i].vp.ADR);
 				}    
 				else if (sym_temp == TIMESEQ)
 				{
@@ -534,8 +715,27 @@ void STATEMENT(SYMSET FSYS, int LEV, int &TX) {   /*STATEMENT*/
 			if (SYM == LPAREN) {
 				do {
 					GetSym();
-					EXPRESSION(SymSetUnion(SymSetNew(RPAREN, COMMA), FSYS), LEV, TX);
-					GEN(OPR, 0, 14);
+					if(SYM == IDENT || SYM == ARRAYSYM)
+					{
+						i = POSITION(ID,TX);
+						if(i == 0)
+							Error(11);
+						if(TABLE[i].KIND == CHAR)
+						{
+							EXPRESSION(SymSetUnion(SymSetNew(RPAREN, COMMA), FSYS), LEV, TX);
+							GEN(OPR,0,18);
+						}
+						else
+						{
+							EXPRESSION(SymSetUnion(SymSetNew(RPAREN, COMMA), FSYS), LEV, TX);
+							GEN(OPR, 0, 14);
+						}
+					}
+					else
+					{
+						EXPRESSION(SymSetUnion(SymSetNew(RPAREN, COMMA), FSYS), LEV, TX);
+						GEN(OPR, 0, 14);
+					}
 				} while (SYM == COMMA);
 				if (SYM != RPAREN) Error(SYMBOLNUM);
 				else GetSym();
@@ -683,6 +883,40 @@ void Block(int LEV, int TX, SYMSET FSYS) {
 				else Error(5);
 			} while (SYM == IDENT);
 		}
+		//CHAR变量的定义方法为CHAR A,B;C,D;
+		if(SYM == CHARSYM)
+		{
+			GetSym();
+			do{
+				CharDeclaration(LEV, TX, DX);
+				while(SYM == COMMA)
+				{
+					GetSym();
+					CharDeclaration(LEV, TX, DX);
+				}
+				if(SYM == SEMICOLON)
+					GetSym();
+				else
+					Error(5);
+			}while(SYM == IDENT);
+		}
+		//DOUBLE类型
+		if(SYM == DOUBLESYM)
+		{
+			GetSym();
+			do{
+				DoubleDeclaration(LEV,TX,DX);
+				while(SYM == COMMA)
+				{
+					GetSym();
+					DoubleDeclaration(LEV, TX, DX);
+				}
+				if(SYM == SEMICOLON)
+					GetSym();
+				else
+					Error(5);
+			}while(SYM == IDENT);
+		}
 		while (SYM == PROCSYM) {
 			GetSym();
 			if (SYM == IDENT) { ENTER(PROCEDUR, LEV, TX, DX); GetSym(); }
@@ -708,7 +942,7 @@ void Block(int LEV, int TX, SYMSET FSYS) {
 	ListCode(CX0);
 } /*Block*/
 //---------------------------------------------------------------------------
-int BASE(int L, int B, int S[]) {
+int BASE(int L, int B, double S[]) {
 	int B1 = B; /*FIND BASE L LEVELS DOWN*/
 	while (L > 0) { B1 = S[B1]; L = L - 1; }
 	return B1;
@@ -717,8 +951,9 @@ int BASE(int L, int B, int S[]) {
 void Interpret() {
 	const int STACKSIZE = 500;
 	int P, B, T; 		/*PROGRAM BASE TOPSTACK REGISTERS*/
+	char ch;
 	INSTRUCTION I;
-	int S[STACKSIZE];  	/*DATASTORE*/
+	double S[STACKSIZE];  	/*DATASTORE*/
 	cout << "~~~ RUN PL0 ~~~" << endl;
 	fprintf(FOUT, "~~~ RUN PL0 ~~~\n");
 	T = 0; B = 1; P = 0;
@@ -728,31 +963,32 @@ void Interpret() {
 		switch (I.F) {
 			case LIT: T++; S[T] = I.A; break;
 			case OPR:
-					  switch (I.A) { /*OPERATOR*/
+					  switch ((int)I.A) { /*OPERATOR*/
 						  case 0: /*RETURN*/ T = B - 1; P = S[T + 3]; B = S[T + 2]; break;
 						  case 1: S[T] = -S[T];  break;
 						  case 2: T--; S[T] = S[T] + S[T + 1];   break;
 						  case 3: T--; S[T] = S[T] - S[T + 1];   break;
 						  case 4: T--; S[T] = S[T] * S[T + 1];   break;
 						  case 5: T--; S[T] = S[T] / S[T + 1]; break;
-						  case 6: S[T] = (S[T] % 2 != 0);        break;
+						  case 6: S[T] = ((int)S[T] % 2 != 0);        break;
 						  case 8: T--; S[T] = S[T] == S[T + 1];  break;
 						  case 9: T--; S[T] = S[T] != S[T + 1];  break;
 						  case 10: T--; S[T] = S[T]<S[T + 1];   break;
 						  case 11: T--; S[T] = S[T] >= S[T + 1];  break;
 						  case 12: T--; S[T] = S[T]>S[T + 1];   break;
 						  case 13: T--; S[T] = S[T] <= S[T + 1];  break;
-						  case 14: cout << S[T] << endl; fprintf(FOUT, "%d\n", S[T]); T--;
+						  case 14: cout << S[T] << endl; fprintf(FOUT, "%d\n", (int)S[T]); T--;
 								   break;
 						  case 15: /*Form1->printfs(""); fprintf(FOUT,"\n"); */ break;
 						  case 16: T++;  cout << "please input:" << endl; cin >> S[T];
-								   fprintf(FOUT, "? %d\n", S[T]);
+								   fprintf(FOUT, "? %d\n", (int)S[T]);
 								   break;
 						  case 17: S[T] = !S[T]; break;
+						  case 18: ch = S[T];cout << ch << endl; T--;
 					  }
 					  break;
-			case LOD: T++; S[T] = S[BASE(I.L, B, S) + I.A]; break;
-			case STO: S[BASE(I.L, B, S) + I.A] = S[T]; T--; break;
+			case LOD: T++; S[T] = S[BASE(I.L, B, S) + (int)I.A]; break;
+			case STO: S[BASE(I.L, B, S) + (int)I.A] = S[T]; T--; break;
 			case CAL: /*GENERAT NEW Block MARK*/
 					  S[T + 1] = BASE(I.L, B, S); S[T + 2] = B; S[T + 3] = P;
 					  B = T + 1; P = I.A; break;
@@ -775,7 +1011,7 @@ void run() {
 	cout << "please input output file name(format is *.txt)" << endl;
 	cin >> EditNameout;
 #else
-	EditNamein = "E01.PL0";
+	EditNamein = filename;
 	EditNameout = "E01.txt";
 #endif
 
@@ -784,8 +1020,11 @@ void run() {
 
 	//关键字单词，共NORW个
 	i = 1;
+	strcpy(KWORD[i++],"ARRAY");
 	strcpy(KWORD[i++], "BEGIN");    strcpy(KWORD[i++], "CALL");
+	strcpy(KWORD[i++], "CHAR");
 	strcpy(KWORD[i++], "CONST");    strcpy(KWORD[i++], "DO");
+	strcpy(KWORD[i++], "DOUBLE");
 	strcpy(KWORD[i++], "ELSE");     strcpy(KWORD[i++], "END");
 	strcpy(KWORD[i++], "FOR");      strcpy(KWORD[i++], "IF");
 	strcpy(KWORD[i++], "ODD");      strcpy(KWORD[i++], "PROCEDURE");
@@ -796,8 +1035,11 @@ void run() {
 
 	//关键字
 	i = 1;
+	WSYM[i++] = ARRAYSYM;
 	WSYM[i++] = BEGINSYM;   WSYM[i++] = CALLSYM;
+	WSYM[i++] = CHARSYM;
 	WSYM[i++] = CONSTSYM;   WSYM[i++] = DOSYM;
+	WSYM[i++] = DOUBLESYM;
 	WSYM[i++] = ELSESYM;    WSYM[i++] = ENDSYM;
 	WSYM[i++] = FORSYM;     WSYM[i++] = IFSYM;
 	WSYM[i++] = ODDSYM;     WSYM[i++] = PROCSYM;
@@ -813,7 +1055,8 @@ void run() {
 	SSYM['='] = EQL;       SSYM[','] = COMMA;
 	SSYM['.'] = PERIOD;    SSYM['#'] = NEQ;
 	SSYM[';'] = SEMICOLON; SSYM['&'] = AND;       
-	SSYM['!'] = NOT;
+	SSYM['!'] = NOT;	   SSYM['['] = LEFTSQ;
+	SSYM[']'] = RIGHTSQ;
 
 	//目标代码指令
 	strcpy(MNEMONIC[LIT], "LIT");   strcpy(MNEMONIC[OPR], "OPR");
@@ -835,6 +1078,9 @@ void run() {
 	DECLBEGSYS[CONSTSYM] = 1;
 	DECLBEGSYS[VARSYM] = 1;
 	DECLBEGSYS[PROCSYM] = 1;
+	DECLBEGSYS[CHARSYM] = 1;
+	DECLBEGSYS[DOUBLESYM] = 1;
+	DECLBEGSYS[ARRAYSYM] = 1;
 	STATBEGSYS[BEGINSYM] = 1;
 	STATBEGSYS[CALLSYM] = 1;
 	STATBEGSYS[IFSYM] = 1;
@@ -842,8 +1088,9 @@ void run() {
 	STATBEGSYS[WRITESYM] = 1;
 	FACBEGSYS[IDENT] = 1;
 	FACBEGSYS[NUMBER] = 1;
+	FACBEGSYS[DOUBLENUM] = 1;
 	FACBEGSYS[LPAREN] = 1;
-
+	FACBEGSYS[ARRAYSYM] = 1;
 	if ((FIN = fopen(EditNamein.c_str(), "r")) != 0)
 	{
 		FOUT = fopen(EditNameout.c_str(), "w");
